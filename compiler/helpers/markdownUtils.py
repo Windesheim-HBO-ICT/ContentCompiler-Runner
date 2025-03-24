@@ -1,6 +1,11 @@
-import re, logging
-from config import dataset, contentReport
-from config import PROCES_COL, PROCESSTAP_COL, TC1_COL, TC2_COL, TC3_COL, TAXONOMIE_PATTERN, TODO_PATTERN, ERROR_INVALID_TAXCO, ERROR_NO_TAXCO_FOUND, ERROR_TAXCO_NOT_FOUND, ERROR_TAXCO_NOT_NEEDED
+import re
+import logging
+from config import (
+    dataset, contentReport, PROCES_COL, PROCESSTAP_COL, TC1_COL, TC2_COL, TC3_COL, 
+    ERROR_INVALID_TAXCO, ERROR_NO_TAXCO_FOUND, 
+    ERROR_TAXCO_NOT_FOUND, ERROR_TAXCO_NOT_NEEDED,
+    DOUBLE_BOLD_IN_TEXT_REGEX, TAXONOMIE_REGEX, TODO_REGEX, TITLE_REGEX, FRONTMATTER_REGEX, FRONTMATTER_KEY_REGEX
+)
 from report.generateTaxcoReport import updateProcessReportData, updateSubjectReportData
 
 
@@ -20,7 +25,7 @@ def generateTags(taxonomies, existingTags, filePath):
     if taxonomies is not None and taxonomies != ['None'] and taxonomies != [''] and taxonomies != []:
         for taxonomie in taxonomies:
             # Check if the taxonomie is in the correct format
-            if not re.match(TAXONOMIE_PATTERN, taxonomie):
+            if not re.match(TAXONOMIE_REGEX, taxonomie):
                 errors.append(f"{ERROR_INVALID_TAXCO} `{taxonomie}`")
                 logging.warning(f"{ERROR_INVALID_TAXCO} `{taxonomie}` in bestand: {filePath}")
                 continue
@@ -116,7 +121,7 @@ def extractHeaderValues(content, fieldName):
 
 # Helper function to find all the To-Do items in the content of a markdown file.	
 def findWIPItems(content):
-    return re.findall(TODO_PATTERN, content)
+    return re.findall(TODO_REGEX, content)
 
 # Helper function to check if a file has an ignore tag.
 def hasIgnoreTag(content, filePath):
@@ -127,3 +132,50 @@ def hasIgnoreTag(content, filePath):
         return True
 
     return False
+
+# Helper function to check if the filename matches the title tag in the markdown file.
+def compareFileNameAndTitel(filePath, content):
+    titel = extractHeaderValues(content, 'title')
+    fileName = filePath.stem
+    
+    if titel != [fileName]:
+        return False
+    
+    return True
+
+# Helper function to check for bold in markdown titel
+def checkForBoldInTitel(content):
+    invalidTitels = []
+    
+    title_regex = re.compile(TITLE_REGEX, re.MULTILINE)
+    mdContentTitels = re.findall(title_regex, content)
+    for level, mdContentTitel in mdContentTitels:
+        if '**' in mdContentTitel:
+            invalidTitels.append(mdContentTitel)
+
+    return invalidTitels
+
+# Helper function to check for double bold text in markdown
+def checkForDoubleBoldInText(content):
+    invalidTexts = []
+    
+    mdContentTexts = re.findall(DOUBLE_BOLD_IN_TEXT_REGEX, content)
+    for mdContentText in mdContentTexts:
+        invalidTexts.append(mdContentText)
+
+    return invalidTexts
+
+# Helper function to check for double page frontmatter
+def checkForDoublePageFrontmatter(content):
+    frontmatter_match = re.search(FRONTMATTER_REGEX, content, re.DOTALL | re.MULTILINE)
+    if not frontmatter_match:
+        return []
+
+    frontmatter = frontmatter_match.group(1)
+    keys = re.findall(FRONTMATTER_KEY_REGEX, frontmatter, re.MULTILINE)
+    duplicate_keys = {key for key in keys if keys.count(key) > 1}
+    
+    if duplicate_keys:
+        return [f"Duplicate keys found in frontmatter: {', '.join(duplicate_keys)}"]
+    
+    return []

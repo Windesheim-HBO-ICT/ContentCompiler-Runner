@@ -4,7 +4,7 @@ from config import VALID_DYNAMIC_LINK_PREFIXES, ERROR_INVALID_DYNAMIC_LINK
 
 
 # Update dynamic links in the content of a markdown file.
-def updateDynamicLinks(filePath, content, skipValidateDynamicLinks):
+def processDynamicLinks(filePath, content, skipValidateDynamicLinks):
     # Find all dynamic links in the content
     dynamicLinks = re.findall(r'\[\[[^"\[][^]]*?\]\]', content)
 
@@ -29,7 +29,7 @@ def updateDynamicLinks(filePath, content, skipValidateDynamicLinks):
             continue
 
         # Check if the dynamic link is valid
-        if not validateDynamicLink(filePath, newLink):
+        if not isLinkValid(filePath, newLink):
             reportLink = newLink.replace('|', '\|')
             errors.append(f"{ERROR_INVALID_DYNAMIC_LINK} `{reportLink}`")
             logging.warning(f"{ERROR_INVALID_DYNAMIC_LINK} `{newLink}` in bestand: {filePath}")
@@ -37,9 +37,8 @@ def updateDynamicLinks(filePath, content, skipValidateDynamicLinks):
     return content, errors
 
 # Checks if the dynamic link is valid and the file exists.
-def validateDynamicLink(sourceFilePath, link):
+def isLinkValid(contentPath, link):
     # Define the root content directory (assuming it is one level up from the current script)
-    contentPath = sourceFilePath
     while Path(contentPath).name != 'content' and Path(contentPath).name != 'test_cases':
         contentPath = contentPath.parent
     
@@ -69,6 +68,6 @@ def validateDynamicLink(sourceFilePath, link):
 
     # If no valid file is found, report error with details
     if not foundFile:
-        logging.warning(f"Error: source file: {sourceFilePath}, target file '{fileName}' not found in content.")
+        logging.warning(f"Error: source file: {contentPath}, target file '{fileName}' not found in content.")
 
     return False

@@ -6,11 +6,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Variables and functions
 from config import failedFiles
-from files.images import fillFailedImages
+from helpers.images import fillFailedImages
 from report.generateTaxcoReport import generateTaxcoReport
 from report.generateContentReport import generateContentReport
-from files.parse import parseMarkdownFiles
-from files.dataset import parseDatasetFile
+from helpers.parse import parseMarkdownFiles
+from helpers.dataset import parseDatasetFile
 from tests.evaluate import evaluateTests
 from report.populate import populateTaxcoReport, populateContentReport
 

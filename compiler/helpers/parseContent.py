@@ -1,0 +1,142 @@
+import logging
+from pathlib import Path
+from config import (
+    ERROR_DOUBLE_PAGE_FRONTMATTER, ERROR_IGNORE_TAG_USED, ERROR_INVALID_MD_BOLD_TEXT,
+    ERROR_INVALID_MD_TITELS, ERROR_NO_TAXCO_FOUND, ERROR_TAXCO_NOT_NEEDED,
+    ERROR_TITEL_NOT_EQUAL_TO_FILENAME, ERROR_WIP_FOUND, FAIL_CROSS_ICON, IGNORE_FOLDERS,
+    NOT_NEEDED_ICON, SUCCESS_ICON, TODO_ITEMS_ICON, WARNING_ICON,
+    failedFiles, ignoredFiles, parsedFiles, WIPFiles
+)
+from helpers.images import copyImages
+from helpers.links import processDynamicLinks
+from helpers.markdownUtils import (
+    checkForBoldInTitel, checkForDoubleBoldInText, checkForDoublePageFrontmatter,
+    compareFileNameAndTitel, extractHeaderValues, findWIPItems, generateTags, hasIgnoreTag
+)
+from report.table import createFileReportRow
+
+
+# Update markdown files in the source directory
+def parseMarkdownFiles(srcDir, destDir, skipValidateDynamicLinks):
+	destDirPath = Path(destDir).resolve()
+	destDirPath.mkdir(parents=True, exist_ok=True)
+
+	srcDirPath = Path(srcDir).resolve()
+
+	# Loop through all markdown files in the source directory
+	for filePath in Path(srcDirPath).rglob('*.md'):
+		relativePath = filePath.relative_to(srcDirPath)
+		destAndRelativePath = destDirPath / relativePath
+		errors = []
+		tagErrors = []
+		todoItems = []
+		taxonomie = []
+		newTags = []
+		isDraft = False
+		isIgnore = False
+
+        # Skip certain folders
+		if any(folder in str(filePath) for folder in IGNORE_FOLDERS):
+			logging.info(f"Skipping folder: {filePath}")
+			continue
+
+		# Read the content of the file
+		with open(filePath, 'r', encoding='utf-8') as f:
+			content = f.read()
+
+		# Parse the file
+		content, linkErrors = processDynamicLinks(filePath, content, skipValidateDynamicLinks)
+		imageErrors = copyImages(content, srcDirPath, destDirPath)
+		existingTags = extractHeaderValues(content, 'tags')
+		difficulty = extractHeaderValues(content, 'difficulty')
+
+        # Check if the file has an ignore tag
+		if hasIgnoreTag(content, filePath):
+			isIgnore = True
+			errors.append(ERROR_IGNORE_TAG_USED)
+		else:
+			taxonomie = extractHeaderValues(content, 'taxonomie')
+			newTags, tagErrors = generateTags(taxonomie, existingTags, filePath)
+			todoItems = findWIPItems(content)
+			doublePageFrontmatter = checkForDoublePageFrontmatter(content)
+			fileNameAndTitelEqual = compareFileNameAndTitel(filePath, content)
+			invalidMDTitels = checkForBoldInTitel(content)
+			invalidMDText = checkForDoubleBoldInText(content)
+
+			if todoItems:
+				errors.append(f"{ERROR_WIP_FOUND}<br>{'<br>'.join(todoItems)}")
+	
+			if doublePageFrontmatter:
+				logging.warning(f"Meerdere pagina frontmatters gevonden in bestand: {filePath}")
+				for error in doublePageFrontmatter:
+					logging.warning(f"{error}")
+				errors.append(ERROR_DOUBLE_PAGE_FRONTMATTER)
+				errors.extend(doublePageFrontmatter)
+
+			if not fileNameAndTitelEqual:
+				titel = extractHeaderValues(content, 'title')
+				logging.warning(f"Titel {titel} komt niet overeen met bestandsnaam in bestand: {filePath}")
+				errors.append(ERROR_TITEL_NOT_EQUAL_TO_FILENAME)
+				errors.append(f"Titel: {titel}")
+				errors.append(f"Bestandsnaam: {filePath.stem}")
+
+			if invalidMDTitels:
+				titel = extractHeaderValues(content, 'title')
+				logging.warning(f"Titel {invalidMDTitels} zijn verkeerd opgemaakt in bestand: {filePath}")
+				errors.append(ERROR_INVALID_MD_TITELS)
+				errors.extend(invalidMDTitels)
+
+			if invalidMDText:
+				logging.warning(f"Tekst is verkeerd opgemaakt in bestand: {filePath}")
+				errors.append(ERROR_INVALID_MD_BOLD_TEXT)
+				errors.extend(invalidMDText)
+
+		# Combine all errors
+		errors = linkErrors + imageErrors + tagErrors + errors
+
+        # If there are any errors, the file is considered a draft unless the ignore tag is used
+		if errors and not isIgnore:
+			isDraft = True
+
+		appendFileToSpecificList(errors, todoItems, filePath, srcDirPath, taxonomie, newTags)
+		saveParsedFile(filePath, taxonomie, newTags, difficulty, isDraft, isIgnore, content, destAndRelativePath)
+
+# Fill the different lists used for the report
+def appendFileToSpecificList(errors, todoItems, filePath, srcDir, taxonomie, tags):
+	if errors:
+		if todoItems:
+			icon, targetList = TODO_ITEMS_ICON, WIPFiles
+		elif ERROR_IGNORE_TAG_USED in errors:
+			icon, targetList = WARNING_ICON, ignoredFiles
+		elif ERROR_NO_TAXCO_FOUND in errors or ERROR_TAXCO_NOT_NEEDED in errors:
+			icon, targetList = FAIL_CROSS_ICON if ERROR_NO_TAXCO_FOUND in errors else NOT_NEEDED_ICON, failedFiles
+		else:
+			icon, targetList = WARNING_ICON, failedFiles
+	else:
+		icon, targetList = SUCCESS_ICON, parsedFiles
+
+	targetList.append(createFileReportRow(icon, filePath, srcDir, taxonomie, tags, errors))
+
+# Combines everything into a new md file
+def saveParsedFile(filePath, taxonomie, tags, difficulty, isDraft, isIgnore, content, destPath):
+    newContent = (
+        f"---\ntitle: {filePath.stem}\ntaxonomie: {taxonomie}\ntags:\n" +
+        '\n'.join([f"- {tag}" for tag in tags]) +
+        "\n"
+    )
+
+    if difficulty:
+        newContent += "difficulty: " + ''.join([f"{level}" for level in difficulty]) + "\n"
+        
+    if isDraft:
+        newContent += "draft: true \n"
+        
+    if isIgnore:
+        newContent += "ignore: true \n"
+
+    newContent += "---" + content.split('---', 2)[-1]
+
+    destPath.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(destPath, 'w', encoding='utf-8') as f:
+        f.write(newContent)

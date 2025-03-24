@@ -4,7 +4,7 @@ from pathlib import Path
 # Variables
 from config import VERBOSE
 # Functions
-from files.parse import parseMarkdownFiles
+from helpers.parse import parseMarkdownFiles
 
 markdownCountCheck = False  
 

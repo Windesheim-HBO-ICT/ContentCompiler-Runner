@@ -1,8 +1,8 @@
 import os, time, shutil, argparse, logging
 from config import DEST_DIR, SRC_DIR, TAXCO_REPORT_PATH, CONTENT_REPORT_PATH, DATASET
-from files.dataset import parseDatasetFile
-from files.parse import parseMarkdownFiles
-from files.images import fillFailedImages
+from helpers.dataset import parseDatasetFile
+from helpers.parseContent import parseMarkdownFiles
+from helpers.images import fillFailedImages
 from report.populate import populateTaxcoReport, populateContentReport
 from report.generateTaxcoReport import generateTaxcoReport
 from report.generateContentReport import generateContentReport
@@ -66,7 +66,7 @@ class ContentCompiler:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Compile content script.")
-    parser.add_argument('--skip-link-check', required=False, action='store_true', help='Skip link check in markdown files.')
+    parser.add_argument('--skip-link-check', required=False, action='store_true', help='Skip link check in markdown helpers.')
     args = parser.parse_args()
 
     startTime = time.time()

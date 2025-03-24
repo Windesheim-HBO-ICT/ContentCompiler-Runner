@@ -1,7 +1,7 @@
 from pathlib import Path
 import os, re, shutil, logging
 from config import failedImages
-from config import IGNORE_FOLDERS, ERROR_IMAGE_NOT_USED, ERROR_IMAGE_NOT_FOUND, TODO_ITEMS_ICON, IMAGE_PATTERN
+from config import IGNORE_FOLDERS, ERROR_IMAGE_NOT_USED, ERROR_IMAGE_NOT_FOUND, TODO_ITEMS_ICON, IMAGE_REGEX
 from report.table import createImageTableTow
 
 
@@ -19,7 +19,7 @@ def copyImages(content, srcDir, destDir):
     if content is None:
         return errors
     
-    imageLinks = re.findall(IMAGE_PATTERN, content)
+    imageLinks = re.findall(IMAGE_REGEX, content)
 
     for imageLink in imageLinks:
         if imageLink[0]:
@@ -54,7 +54,6 @@ def copyImages(content, srcDir, destDir):
 
 """
 Fills the image Report with data from the images in the folders
-Every unique TC3 and TC1 combination will be added to the Report 2 data.
 """
 def fillFailedImages(srcDir, destDir):
     srcDirPath = Path(srcDir).resolve()
@@ -65,8 +64,7 @@ def fillFailedImages(srcDir, destDir):
 
     for image in srcImages: 
         if str(image.stem) not in {str(img.stem) for img in destImages}:
-            error_msg = f"{ERROR_IMAGE_NOT_USED} `{image.stem}`"
-            logging.warning(error_msg)
+            logging.warning(f"{ERROR_IMAGE_NOT_USED} `{image.stem}`")
             failedImages.append(createImageTableTow(TODO_ITEMS_ICON, image, srcDirPath, ERROR_IMAGE_NOT_USED))
 
 # Helper method to populate the image report

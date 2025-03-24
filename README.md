@@ -167,7 +167,7 @@ Test cases cover:
 ## Dependencies
 The script requires the following Python packages:
 - `pandas`: For handling and manipulating the dataset file.
-- `openpyxl`: For reading Excel files.
+- `openpyxl`: For reading Excel helpers.
 - `shutil`: For file operations such as copying and removing directories.
 - `argparse`: For parsing command-line arguments.
 - `pathlib`: For handling filesystem paths in an object-oriented way.
@@ -184,7 +184,7 @@ It's also used to save the state of the reports.
 ## Report structure
 The script produces two md reports.
 - `taxco_report.md`: Is used to see which taxco's are used
-- `content_report.md` Is used to see detaild info on specific files.
+- `content_report.md` Is used to see detaild info on specific helpers.
 
 ### `taxco_report.md`
 The taxco report has the following structure in the code.
