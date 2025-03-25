@@ -1,11 +1,11 @@
 import os, time, shutil, argparse, logging
-from config import DEST_DIR, SRC_DIR, TAXCO_REPORT_PATH, CONTENT_REPORT_PATH, DATASET
 from helpers.dataset import parseDatasetFile
 from helpers.parseContent import parseMarkdownFiles
-from helpers.images import fillFailedImages
-from report.populate import populateTaxcoReport, populateContentReport
 from report.generateTaxcoReport import generateTaxcoReport
 from report.generateContentReport import generateContentReport
+from report.populate import populateTaxcoReport, populateContentReport
+from helpers.media import initCandidateMediaFiles, finalizeMediaValidation
+from config import DEST_DIR, SRC_DIR, TAXCO_REPORT_PATH, CONTENT_REPORT_PATH, DATASET
 
 class ContentCompiler:
     def __init__(self, skipLinkCheck: bool = False):
@@ -18,28 +18,29 @@ class ContentCompiler:
             level=logging.INFO,
             format='%(asctime)s - %(levelname)s - %(message)s'
         )
-
-    def validatePaths(self, dataset, src_dir) -> None:
+        
+    def handlePaths(self, dataset, srcDir, destDir) -> None:
+        # Check if the dataset and source directory exist
         if not os.path.exists(dataset):
             raise FileNotFoundError(f"Dataset file {dataset} not found.")
-        if not os.path.exists(src_dir):
-            raise FileNotFoundError(f"Source directory {src_dir} not found.")
-
-    def initializeDestDir(self, dest_dir) -> None:
-        if os.path.exists(dest_dir):
-            shutil.rmtree(dest_dir)
-        os.mkdir(dest_dir)
+        if not os.path.exists(srcDir):
+            raise FileNotFoundError(f"Source directory {srcDir} not found.")
+        
+        # Create destination directory
+        if os.path.exists(destDir):
+            shutil.rmtree(destDir)
+        os.mkdir(destDir)
 
     def compile(self) -> None:
         try:
             dataset = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', DATASET))
-            src_dir = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', SRC_DIR))
-            dest_dir = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', DEST_DIR))
-            taxco_report_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', TAXCO_REPORT_PATH))
-            content_report_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', CONTENT_REPORT_PATH))
+            srcDir = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', SRC_DIR))
+            destDir = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', DEST_DIR))
+            taxcoReportPath = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', TAXCO_REPORT_PATH))
+            contentReportPath = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', CONTENT_REPORT_PATH))
             
-            self.validatePaths(dataset, src_dir)
-            self.initializeDestDir(dest_dir)
+            # Handle paths checking and creation
+            self.handlePaths(dataset, srcDir, destDir)
             
             logging.info("Starting content compilation...")
             
@@ -50,14 +51,17 @@ class ContentCompiler:
             populateContentReport()
             logging.info("Reports populated")
             
-            parseMarkdownFiles(src_dir, dest_dir, self.skipLinkCheck)
+            initCandidateMediaFiles(srcDir)
+            logging.info("Candidate media files initialized")
+            
+            parseMarkdownFiles(srcDir, destDir, self.skipLinkCheck)
             logging.info("Markdown files parsed")
             
-            fillFailedImages(src_dir, dest_dir)
-            logging.info("Failed images processed")
+            finalizeMediaValidation()
+            logging.info("Media validation finalized")
             
-            generateTaxcoReport(taxco_report_path)
-            generateContentReport(content_report_path)
+            generateTaxcoReport(taxcoReportPath)
+            generateContentReport(contentReportPath)
             logging.info("Reports generated successfully")
             
         except Exception as e:

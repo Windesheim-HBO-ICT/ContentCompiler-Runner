@@ -2,7 +2,7 @@
 dataset = list()																			# Dataset list 
 parsedFiles = []																			# Track the status of each parsed file
 failedFiles = []																			# Track the status of each failed file
-failedImages = []																			# Track which images don't start with a 4C/ID component
+failedMediaFiles = []																		# Track which media files have errors
 WIPFiles = []																				# Track the files that contain Work-in-progress items
 ignoredFiles = []																			# Track the files that have an ignore tag
 taxcoReport = {}																			# Report 1 data
@@ -20,12 +20,14 @@ IGNORE_FOLDERS = ["schrijfwijze"] 															# Folders to ignore when parsin
 # Regex patterns
 TODO_REGEX = r'-=[A-Z]+=-' 																    # Regex pattern to find TODO items
 TAXONOMIE_REGEX = r'^[a-z]{2}-\d{1,3}\.[123]\.[^\s\.]+(-[^\s\.]+)*\.(?:OI|DT|PI|LT)$'		# Taxonomie regex
-IMAGE_REGEX = r'!\[\[([^|\]]+)(?:\|([^\]]+))?\]\]'		        						    # Image regex
-PDF_REGEX = r'\[([^|\]]+)\]\(([^|\)]+\.pdf)\)'											    # PDF regex
+IMAGE_REGEX = r'!\[\[([^|\]]+\.(?:jpg|jpeg|png|gif|bmp|tiff|webp))(?:\|([^\]]+))?\]\]'      # Image regex
+PDF_REGEX = r'\[\[([^|\]]+\.pdf)(?:\|([^\]]+))?\]\]'        						        # For valid PDF references: [[myFile.pdf]] or [[myFile.pdf|Alt text]]
+ALT_PDF_REGEX = r'!\[\[([^|\]]+\.pdf)(?:\|([^\]]+))?\]\]'                                   # For invalid PDF references with '!' in front: ![[myFile.pdf]]       
 DOUBLE_BOLD_IN_TEXT_REGEX = r'\*\*\*\*.*?\*\*\*\*'											# Bold in titel regex
 TITLE_REGEX = r'^(#{1,6})\s*(.+)'															# Title regex
 FRONTMATTER_REGEX = r'^---\n(.*?)\n---'														# Frontmatter regex
 FRONTMATTER_KEY_REGEX = r'^\s*([a-zA-Z0-9_-]+)\s*:' 										# Frontmatter key regex
+DYNAMIC_LINK_REGEX = r'\[\[[^"\[][^]]*?\]\]'												# Dynamic link regex
 
 VERBOSE = False 																			# Flag to enable verbose output
 
@@ -56,7 +58,7 @@ ERROR_IMAGE_NOT_FOUND = "Afbeelding niet gevonden: "
 ERROR_IMAGE_NOT_USED = "Afbeelding wordt niet gebruikt: "
 ERROR_PDF_NOT_FOUND = "PDF niet gevonden: "
 ERROR_PDF_NOT_USED = "PDF wordt niet gebruikt: "
-ERROR_INVALID_DYNAMIC_LINK = "Dynamische link fout: "
+ERROR_INVALID_DYNAMIC_LINK = "Bestand niet gevonden: "
 ERROR_WIP_FOUND = "Work-in-progress items gevonden: "
 ERROR_TITEL_NOT_EQUAL_TO_FILENAME = "Titel komt niet overeen met bestandsnaam"
 ERROR_INVALID_MD_TITELS = "Titels zijn verkeerd opgemaakt"

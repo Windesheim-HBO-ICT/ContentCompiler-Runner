@@ -33,22 +33,22 @@ def formatFileReportTable(fileReport):
     return generateMarkdownTable(headers, rows)
 
 # Create a row for the image report table
-def createImageTableTow(status, filePath, srcDir, error):
+def createMediaTableTow(status, filePath, srcDir, error):
     return {
         "status" : status,
-        "image": filePath.stem,
+        "file": filePath.stem,
         "path": str(filePath.relative_to(srcDir)),
         "error": error,
     }
 
 # Format the image report table with specific headers and rows
-def formatImageReportTable(imageReport):
+def formatMediaReportTable(mediaReport):
     headers = ["Status", "Image", "Path", "Error"]
     rows = [[
         file['status'], 
         file['image'], 
         file['path'],
         file['error']
-    ] for file in imageReport]
+    ] for file in mediaReport]
 
     return generateMarkdownTable(headers, rows)

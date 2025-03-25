@@ -7,20 +7,18 @@ from config import (
     NOT_NEEDED_ICON, SUCCESS_ICON, TODO_ITEMS_ICON, WARNING_ICON,
     failedFiles, ignoredFiles, parsedFiles, WIPFiles
 )
-from helpers.images import copyImages
-from helpers.links import processDynamicLinks
+from helpers.media import processMediaLinks
+from report.table import createFileReportRow
 from helpers.markdownUtils import (
     checkForBoldInTitel, checkForDoubleBoldInText, checkForDoublePageFrontmatter,
     compareFileNameAndTitel, extractHeaderValues, findWIPItems, generateTags, hasIgnoreTag
 )
-from report.table import createFileReportRow
 
 
 # Update markdown files in the source directory
 def parseMarkdownFiles(srcDir, destDir, skipValidateDynamicLinks):
 	destDirPath = Path(destDir).resolve()
 	destDirPath.mkdir(parents=True, exist_ok=True)
-
 	srcDirPath = Path(srcDir).resolve()
 
 	# Loop through all markdown files in the source directory
@@ -45,12 +43,19 @@ def parseMarkdownFiles(srcDir, destDir, skipValidateDynamicLinks):
 			content = f.read()
 
 		# Parse the file
-		content, linkErrors = processDynamicLinks(filePath, content, skipValidateDynamicLinks)
-		imageErrors = copyImages(content, srcDirPath, destDirPath)
 		existingTags = extractHeaderValues(content, 'tags')
 		difficulty = extractHeaderValues(content, 'difficulty')
+		doublePageFrontmatter = checkForDoublePageFrontmatter(content)
+		content, mediaErrors = processMediaLinks(filePath, content, srcDir, destDir, skipValidateDynamicLinks)
 
-        # Check if the file has an ignore tag
+		if doublePageFrontmatter:
+			logging.warning(f"Meerdere pagina frontmatters gevonden in bestand: {filePath}")
+			for error in doublePageFrontmatter:
+				logging.warning(f"{error}")
+			errors.append(ERROR_DOUBLE_PAGE_FRONTMATTER)
+			errors.extend(doublePageFrontmatter)
+
+		# Check if the file has an ignore tag
 		if hasIgnoreTag(content, filePath):
 			isIgnore = True
 			errors.append(ERROR_IGNORE_TAG_USED)
@@ -58,31 +63,23 @@ def parseMarkdownFiles(srcDir, destDir, skipValidateDynamicLinks):
 			taxonomie = extractHeaderValues(content, 'taxonomie')
 			newTags, tagErrors = generateTags(taxonomie, existingTags, filePath)
 			todoItems = findWIPItems(content)
-			doublePageFrontmatter = checkForDoublePageFrontmatter(content)
 			fileNameAndTitelEqual = compareFileNameAndTitel(filePath, content)
 			invalidMDTitels = checkForBoldInTitel(content)
 			invalidMDText = checkForDoubleBoldInText(content)
 
 			if todoItems:
 				errors.append(f"{ERROR_WIP_FOUND}<br>{'<br>'.join(todoItems)}")
-	
-			if doublePageFrontmatter:
-				logging.warning(f"Meerdere pagina frontmatters gevonden in bestand: {filePath}")
-				for error in doublePageFrontmatter:
-					logging.warning(f"{error}")
-				errors.append(ERROR_DOUBLE_PAGE_FRONTMATTER)
-				errors.extend(doublePageFrontmatter)
 
 			if not fileNameAndTitelEqual:
 				titel = extractHeaderValues(content, 'title')
-				logging.warning(f"Titel {titel} komt niet overeen met bestandsnaam in bestand: {filePath}")
+				logging.warning(f"Titel {titel} komt niet overeen met bestandsnaam {filePath.stem} in bestand: {filePath}")
 				errors.append(ERROR_TITEL_NOT_EQUAL_TO_FILENAME)
 				errors.append(f"Titel: {titel}")
 				errors.append(f"Bestandsnaam: {filePath.stem}")
 
 			if invalidMDTitels:
 				titel = extractHeaderValues(content, 'title')
-				logging.warning(f"Titel {invalidMDTitels} zijn verkeerd opgemaakt in bestand: {filePath}")
+				logging.warning(f"Titel {invalidMDTitels} is/zijn verkeerd opgemaakt in bestand: {filePath}")
 				errors.append(ERROR_INVALID_MD_TITELS)
 				errors.extend(invalidMDTitels)
 
@@ -92,7 +89,7 @@ def parseMarkdownFiles(srcDir, destDir, skipValidateDynamicLinks):
 				errors.extend(invalidMDText)
 
 		# Combine all errors
-		errors = linkErrors + imageErrors + tagErrors + errors
+		errors = mediaErrors + tagErrors + errors
 
         # If there are any errors, the file is considered a draft unless the ignore tag is used
 		if errors and not isIgnore:
