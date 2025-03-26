@@ -20,13 +20,13 @@ class TestRunner:
         self.setupLogging()
 
     @staticmethod
-    def setupLogging() -> None:
+    def setupLogging():
         logging.basicConfig(
             level=logging.INFO,
             format='%(asctime)s - %(levelname)s - %(message)s'
         )
 
-    def setupPaths(self) -> None:
+    def setupPaths(self):
         self.SRC_DIR = Path(__file__).resolve().parents[0] / 'test_cases'
         self.DEST_DIR = Path(__file__).resolve().parents[0] / 'test_cases_build'
         self.DATASET_PATH = Path(__file__).resolve().parents[0] / 'test_dataset.xlsx'
@@ -67,18 +67,18 @@ class TestRunner:
                 
         return expectedAmountOfDraftFiles == actualAmountOfDraftFiles
 
-    def validatePaths(self) -> None:
+    def validatePaths(self):
         if not os.path.exists(self.DATASET_PATH):
             raise FileNotFoundError(f"Dataset file {self.DATASET_PATH} not found.")
         if not os.path.exists(self.SRC_DIR):
             raise FileNotFoundError(f"Source directory {self.SRC_DIR} not found.")
 
-    def initializeDestDir(self) -> None:
+    def initializeDestDir(self):
         if os.path.exists(self.DEST_DIR):
             shutil.rmtree(self.DEST_DIR)
         os.mkdir(self.DEST_DIR)
 
-    def run(self) -> None:
+    def run(self):
         try:
             self.validatePaths()
             self.initializeDestDir()
@@ -125,7 +125,7 @@ class TestRunner:
             logging.error(f"Error during test execution: {str(e)}")
             raise
 
-def main() -> None:
+def main():
     try:
         runner = TestRunner()
         runner.run()

@@ -138,8 +138,11 @@ def hasIgnoreTag(filePath, content):
     return False
 
 # Helper function to check if the filename matches the title tag in the markdown file.
-def compareFileNameAndTitel(filePath, content):
-    return extractHeaderValues(content, 'title') != filePath.stem 
+def isFileNameAndTitelEqual(filePath, content) -> bool:
+    titel = extractHeaderValues(content, 'title')
+    fileName = filePath.stem
+    
+    return titel == [fileName]
 
 # Helper function to check for bold in markdown titel
 def checkForBoldInTitel(content):

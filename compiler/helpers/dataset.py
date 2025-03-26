@@ -12,7 +12,7 @@ def checkRowEmpty(row):
     return any(index >= len(row) or row[index] in ("", None) for index in columns_to_check)
 
 # Parse the dataset file from a XLSX file to a list.
-def parseDatasetFile() -> None:
+def parseDatasetFile():
     try:
         # Open the dataset and parse it to a list
         df = pd.read_excel(DATASET_PATH)

@@ -4,7 +4,7 @@ from helpers.parseContent import parseMarkdownFiles
 from report.generateTaxcoReport import generateTaxcoReport
 from report.generateContentReport import generateContentReport
 from report.populate import populateTaxcoReport, populateContentReport
-from helpers.media import initCandidateMediaFiles, finalizeMediaValidation
+from helpers.media import fillMediaList, processMediaList
 from config import DATASET_PATH, SRC_DIR, DEST_DIR
 
 class ContentCompiler:
@@ -13,13 +13,13 @@ class ContentCompiler:
         self.setupLogging()
 
     @staticmethod
-    def setupLogging() -> None:
+    def setupLogging():
         logging.basicConfig(
             level=logging.INFO,
             format='%(asctime)s - %(levelname)s - %(message)s'
         )
         
-    def handlePaths(self) -> None:
+    def handlePaths(self):
         # Check if the dataset and source directory exist
         if not os.path.exists(DATASET_PATH):
             raise FileNotFoundError(f"Dataset file {DATASET_PATH} not found.")
@@ -31,7 +31,7 @@ class ContentCompiler:
             shutil.rmtree(DEST_DIR)
         os.mkdir(DEST_DIR)
 
-    def compile(self) -> None:
+    def compile(self):
         try:            
             # Handle paths checking and creation
             self.handlePaths()
@@ -45,13 +45,13 @@ class ContentCompiler:
             populateContentReport()
             logging.info("Reports populated")
             
-            initCandidateMediaFiles()
+            fillMediaList()
             logging.info("Candidate media files initialized")
             
             parseMarkdownFiles(self.skipLinkCheck)
             logging.info("Markdown files parsed")
             
-            finalizeMediaValidation()
+            processMediaList()
             logging.info("Media validation finalized")
             
             generateTaxcoReport()
@@ -62,7 +62,7 @@ class ContentCompiler:
             logging.error(f"Error during compilation: {str(e)}", exc_info=True)
             raise
 
-def main() -> None:
+def main():
     parser = argparse.ArgumentParser(description="Compile content script.")
     parser.add_argument('--skip-link-check', required=False, action='store_true', help='Skip link check in markdown helpers.')
     args = parser.parse_args()

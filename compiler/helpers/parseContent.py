@@ -12,7 +12,7 @@ from helpers.media import processMediaLinks
 from report.table import createFileReportRow
 from helpers.markdownUtils import (
     checkForBoldInTitel, checkForDoubleBoldInText, checkForDoublePageFrontmatter,
-    compareFileNameAndTitel, extractHeaderValues, findWIPItems, generateTags, hasIgnoreTag
+    isFileNameAndTitelEqual, extractHeaderValues, findWIPItems, generateTags, hasIgnoreTag
 )
 
 
@@ -62,7 +62,7 @@ def parseMarkdownFiles(skipValidateDynamicLinks):
 			taxonomie = extractHeaderValues(content, 'taxonomie')
 			newTags, tagErrors = generateTags(taxonomie, existingTags, filePath)
 			todoItems = findWIPItems(content)
-			fileNameAndTitelEqual = compareFileNameAndTitel(filePath, content)
+			fileNameAndTitelEqual = isFileNameAndTitelEqual(filePath, content)
 			invalidMDTitels = checkForBoldInTitel(content)
 			invalidMDText = checkForDoubleBoldInText(content)
 

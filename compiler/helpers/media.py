@@ -14,7 +14,7 @@ from config import (
 # Global candidate list for media files (images and PDFs)
 candidateMediaFiles = []
 
-def initCandidateMediaFiles():
+def fillMediaList():
     """
     Initialize the global candidateMediaFiles list by collecting all files in SRC_DIR that might be referenced (images, PDFs, etc.).
     """
@@ -54,13 +54,12 @@ def processMediaLinks(filePath: Path, content: str, skipValidateDynamicLinks: bo
     return content, errors
 
 
-def finalizeMediaValidation() -> None:
+def processMediaList():
     """
     After all markdown files have been processed, check any remaining
     media files in candidateMediaFiles. They were never referenced,
     so mark them as "not used" errors.
     """
-    global candidateMediaFiles
 
     for file in candidateMediaFiles:
         if file.suffix.lower() == '.pdf':
