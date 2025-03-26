@@ -1,4 +1,7 @@
-import os, time, shutil, argparse, logging
+import os, time, shutil, argparse, logging, sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from compiler.helpers.dataset import parseDatasetFile
 from compiler.helpers.parseContent import parseMarkdownFiles
 from compiler.report.generateTaxcoReport import generateTaxcoReport
@@ -18,7 +21,7 @@ class ContentCompiler:
             level=logging.INFO,
             format='%(asctime)s - %(levelname)s - %(message)s'
         )
-        
+
     def handlePaths(self):
         # Check if the dataset and source directory exist
         if not os.path.exists(DATASET_PATH):
