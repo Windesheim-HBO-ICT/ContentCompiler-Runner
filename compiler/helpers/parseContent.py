@@ -82,47 +82,49 @@ def processTags(filePath, content, existingTags):
 
 # Helper function to validate the content of a markdown file
 def validateContent(filePath, content):
-    errors = []
-    todoItems = findWIPItems(content)
-    fileNameAndTitelEqual = isFileNameAndTitelEqual(filePath, content)
-    invalidMDTitels = checkForBoldInTitel(content)
-    invalidMDText = checkForDoubleBoldInText(content)
+	errors = []
+	todoItems = findWIPItems(content)
+	fileNameAndTitelEqual = isFileNameAndTitelEqual(filePath, content)
+	invalidMDTitels = checkForBoldInTitel(content)
+	invalidMDText = checkForDoubleBoldInText(content)
 
-    if todoItems:
-        errors.append(f"{ERROR_WIP_FOUND}<br>{'<br>'.join(todoItems)}")
+	if todoItems:
+		errors.append(f"{ERROR_WIP_FOUND}<br>{'<br>'.join(todoItems)}")
 
-    if not fileNameAndTitelEqual:
-        titel = extractHeaderValues(content, 'title')
-        logging.warning(f"Titel '{titel}' komt niet overeen met bestandsnaam '{filePath.stem}' in bestand: '{filePath}'")
-        errors.append(ERROR_TITEL_NOT_EQUAL_TO_FILENAME)
-        errors.append(f"- Titel: {titel}")
-        errors.append(f"- Bestandsnaam: {filePath.stem}")
+	if not fileNameAndTitelEqual:
+		titel = extractHeaderValues(content, 'title')
+		if isinstance(titel, list):
+			titel = titel[0] if titel else ""
+		logging.warning(f"Titel '{titel}' komt niet overeen met bestandsnaam '{filePath.stem}' in bestand: '{filePath}'")
+		errors.append(ERROR_TITEL_NOT_EQUAL_TO_FILENAME)
+		errors.append(f"- Titel: {titel}")
+		errors.append(f"- Bestandsnaam: {filePath.stem}")
 
-    if invalidMDTitels:
-        titel = extractHeaderValues(content, 'title')
-        logging.warning(f"Titel '{invalidMDTitels}' is/zijn verkeerd opgemaakt in bestand: '{filePath}'")
-        errors.append(ERROR_INVALID_MD_TITELS)
-        errors.extend([f"- {error.replace('**', '\\*\\*')}" for error in invalidMDTitels])
+	if invalidMDTitels:
+		titel = extractHeaderValues(content, 'title')
+		logging.warning(f"Titel '{invalidMDTitels}' is/zijn verkeerd opgemaakt in bestand: '{filePath}'")
+		errors.append(ERROR_INVALID_MD_TITELS)
+		errors.extend([f"- {error.replace('**', '\\*\\*')}" for error in invalidMDTitels])
 
-    if invalidMDText:
-        logging.warning(f"Tekst is verkeerd opgemaakt in bestand: '{filePath}'")
-        errors.append(ERROR_INVALID_MD_BOLD_TEXT)
-        errors.extend([f"- {error.replace('**', '\\*\\*')}" for error in invalidMDText])
+	if invalidMDText:
+		logging.warning(f"Tekst is verkeerd opgemaakt in bestand: '{filePath}'")
+		errors.append(ERROR_INVALID_MD_BOLD_TEXT)
+		errors.extend([f"- {error.replace('**', '\\*\\*')}" for error in invalidMDText])
 
-    return errors, todoItems
+	return errors, todoItems
 
 # Fill the different lists used for the report
 def appendFileToSpecificList(errors, todoItems, filePath, taxonomie, tags):
 	if errors:
-		if todoItems:
-			icon = TODO_ITEMS_ICON
-			targetList = WIPFiles   
-		elif ERROR_IGNORE_TAG_USED in errors:
+		if ERROR_IGNORE_TAG_USED in errors:
 			icon = WARNING_ICON
 			targetList = ignoredFiles
 		elif ERROR_NO_TAXCO_FOUND in errors or ERROR_TAXCO_NOT_NEEDED in errors:
 			icon = FAIL_CROSS_ICON
 			targetList = failedFiles
+		elif todoItems:
+			icon = TODO_ITEMS_ICON
+			targetList = WIPFiles
 		else:
 			icon = WARNING_ICON
 			targetList = failedFiles
