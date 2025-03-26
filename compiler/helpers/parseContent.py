@@ -1,11 +1,12 @@
 import logging
 from pathlib import Path
 from config import (
+	SRC_DIR, DEST_DIR,
+    failedFiles, ignoredFiles, parsedFiles, WIPFiles,
+	SUCCESS_ICON, TODO_ITEMS_ICON, WARNING_ICON,
     ERROR_DOUBLE_PAGE_FRONTMATTER, ERROR_IGNORE_TAG_USED, ERROR_INVALID_MD_BOLD_TEXT,
     ERROR_INVALID_MD_TITELS, ERROR_NO_TAXCO_FOUND, ERROR_TAXCO_NOT_NEEDED,
     ERROR_TITEL_NOT_EQUAL_TO_FILENAME, ERROR_WIP_FOUND, FAIL_CROSS_ICON, IGNORE_FOLDERS,
-    NOT_NEEDED_ICON, SUCCESS_ICON, TODO_ITEMS_ICON, WARNING_ICON,
-    failedFiles, ignoredFiles, parsedFiles, WIPFiles
 )
 from helpers.media import processMediaLinks
 from report.table import createFileReportRow
@@ -16,15 +17,13 @@ from helpers.markdownUtils import (
 
 
 # Update markdown files in the source directory
-def parseMarkdownFiles(srcDir, destDir, skipValidateDynamicLinks):
-	destDirPath = Path(destDir).resolve()
-	destDirPath.mkdir(parents=True, exist_ok=True)
-	srcDirPath = Path(srcDir).resolve()
-
+def parseMarkdownFiles(skipValidateDynamicLinks):
 	# Loop through all markdown files in the source directory
-	for filePath in Path(srcDirPath).rglob('*.md'):
-		relativePath = filePath.relative_to(srcDirPath)
-		destAndRelativePath = destDirPath / relativePath
+	for filePath in Path(SRC_DIR).rglob('*.md'):
+		# Determine the destination path where the new markdown file will be saved
+		relativePath = filePath.relative_to(SRC_DIR)
+		destFilePath = DEST_DIR / relativePath
+  
 		errors = []
 		tagErrors = []
 		todoItems = []
@@ -46,7 +45,7 @@ def parseMarkdownFiles(srcDir, destDir, skipValidateDynamicLinks):
 		existingTags = extractHeaderValues(content, 'tags')
 		difficulty = extractHeaderValues(content, 'difficulty')
 		doublePageFrontmatter = checkForDoublePageFrontmatter(content)
-		content, mediaErrors = processMediaLinks(filePath, content, srcDir, destDir, skipValidateDynamicLinks)
+		content, mediaErrors = processMediaLinks(filePath, content, skipValidateDynamicLinks)
 
 		if doublePageFrontmatter:
 			logging.warning(f"Meerdere pagina frontmatters gevonden in bestand: {filePath}")
@@ -56,7 +55,7 @@ def parseMarkdownFiles(srcDir, destDir, skipValidateDynamicLinks):
 			errors.extend(doublePageFrontmatter)
 
 		# Check if the file has an ignore tag
-		if hasIgnoreTag(content, filePath):
+		if hasIgnoreTag(filePath, content):
 			isIgnore = True
 			errors.append(ERROR_IGNORE_TAG_USED)
 		else:
@@ -72,21 +71,21 @@ def parseMarkdownFiles(srcDir, destDir, skipValidateDynamicLinks):
 
 			if not fileNameAndTitelEqual:
 				titel = extractHeaderValues(content, 'title')
-				logging.warning(f"Titel {titel} komt niet overeen met bestandsnaam {filePath.stem} in bestand: {filePath}")
+				logging.warning(f"Titel '{titel}' komt niet overeen met bestandsnaam '{filePath.stem}' in bestand: '{filePath}'")
 				errors.append(ERROR_TITEL_NOT_EQUAL_TO_FILENAME)
-				errors.append(f"Titel: {titel}")
-				errors.append(f"Bestandsnaam: {filePath.stem}")
+				errors.append(f"- Titel: {titel}")
+				errors.append(f"- Bestandsnaam: {filePath.stem}")
 
 			if invalidMDTitels:
 				titel = extractHeaderValues(content, 'title')
-				logging.warning(f"Titel {invalidMDTitels} is/zijn verkeerd opgemaakt in bestand: {filePath}")
+				logging.warning(f"Titel '{invalidMDTitels}' is/zijn verkeerd opgemaakt in bestand: '{filePath}'")
 				errors.append(ERROR_INVALID_MD_TITELS)
-				errors.extend(invalidMDTitels)
+				errors.extend([f"- {error.replace('**', '\\*\\*')}" for error in invalidMDTitels])
 
 			if invalidMDText:
-				logging.warning(f"Tekst is verkeerd opgemaakt in bestand: {filePath}")
+				logging.warning(f"Tekst is verkeerd opgemaakt in bestand: '{filePath}'")
 				errors.append(ERROR_INVALID_MD_BOLD_TEXT)
-				errors.extend(invalidMDText)
+				errors.extend([f"- {error.replace('**', '\\*\\*')}" for error in invalidMDText])
 
 		# Combine all errors
 		errors = mediaErrors + tagErrors + errors
@@ -95,27 +94,32 @@ def parseMarkdownFiles(srcDir, destDir, skipValidateDynamicLinks):
 		if errors and not isIgnore:
 			isDraft = True
 
-		appendFileToSpecificList(errors, todoItems, filePath, srcDirPath, taxonomie, newTags)
-		saveParsedFile(filePath, taxonomie, newTags, difficulty, isDraft, isIgnore, content, destAndRelativePath)
+		appendFileToSpecificList(errors, todoItems, filePath, taxonomie, newTags)
+		saveParsedFile(filePath, taxonomie, newTags, difficulty, isDraft, isIgnore, content, destFilePath)
 
 # Fill the different lists used for the report
-def appendFileToSpecificList(errors, todoItems, filePath, srcDir, taxonomie, tags):
+def appendFileToSpecificList(errors, todoItems, filePath, taxonomie, tags):
 	if errors:
 		if todoItems:
-			icon, targetList = TODO_ITEMS_ICON, WIPFiles
+			icon = TODO_ITEMS_ICON
+			targetList = WIPFiles   
 		elif ERROR_IGNORE_TAG_USED in errors:
-			icon, targetList = WARNING_ICON, ignoredFiles
+			icon = WARNING_ICON
+			targetList = ignoredFiles
 		elif ERROR_NO_TAXCO_FOUND in errors or ERROR_TAXCO_NOT_NEEDED in errors:
-			icon, targetList = FAIL_CROSS_ICON if ERROR_NO_TAXCO_FOUND in errors else NOT_NEEDED_ICON, failedFiles
+			icon = FAIL_CROSS_ICON
+			targetList = failedFiles
 		else:
-			icon, targetList = WARNING_ICON, failedFiles
+			icon = WARNING_ICON
+			targetList = failedFiles
 	else:
-		icon, targetList = SUCCESS_ICON, parsedFiles
+		icon = SUCCESS_ICON
+		targetList = parsedFiles
 
-	targetList.append(createFileReportRow(icon, filePath, srcDir, taxonomie, tags, errors))
+	targetList.append(createFileReportRow(icon, filePath, taxonomie, tags, errors))
 
 # Combines everything into a new md file
-def saveParsedFile(filePath, taxonomie, tags, difficulty, isDraft, isIgnore, content, destPath):
+def saveParsedFile(filePath, taxonomie, tags, difficulty, isDraft, isIgnore, content, destFilePath):
     newContent = (
         f"---\ntitle: {filePath.stem}\ntaxonomie: {taxonomie}\ntags:\n" +
         '\n'.join([f"- {tag}" for tag in tags]) +
@@ -133,7 +137,7 @@ def saveParsedFile(filePath, taxonomie, tags, difficulty, isDraft, isIgnore, con
 
     newContent += "---" + content.split('---', 2)[-1]
 
-    destPath.parent.mkdir(parents=True, exist_ok=True)
+    destFilePath.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(destPath, 'w', encoding='utf-8') as f:
+    with open(destFilePath, 'w', encoding='utf-8') as f:
         f.write(newContent)

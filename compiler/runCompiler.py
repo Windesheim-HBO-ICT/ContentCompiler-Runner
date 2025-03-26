@@ -5,7 +5,7 @@ from report.generateTaxcoReport import generateTaxcoReport
 from report.generateContentReport import generateContentReport
 from report.populate import populateTaxcoReport, populateContentReport
 from helpers.media import initCandidateMediaFiles, finalizeMediaValidation
-from config import DEST_DIR, SRC_DIR, TAXCO_REPORT_PATH, CONTENT_REPORT_PATH, DATASET
+from config import DATASET_PATH, SRC_DIR, DEST_DIR
 
 class ContentCompiler:
     def __init__(self, skipLinkCheck: bool = False):
@@ -19,49 +19,43 @@ class ContentCompiler:
             format='%(asctime)s - %(levelname)s - %(message)s'
         )
         
-    def handlePaths(self, dataset, srcDir, destDir) -> None:
+    def handlePaths(self) -> None:
         # Check if the dataset and source directory exist
-        if not os.path.exists(dataset):
-            raise FileNotFoundError(f"Dataset file {dataset} not found.")
-        if not os.path.exists(srcDir):
-            raise FileNotFoundError(f"Source directory {srcDir} not found.")
+        if not os.path.exists(DATASET_PATH):
+            raise FileNotFoundError(f"Dataset file {DATASET_PATH} not found.")
+        if not os.path.exists(SRC_DIR):
+            raise FileNotFoundError(f"Source directory {DATASET_PATH} not found.")
         
         # Create destination directory
-        if os.path.exists(destDir):
-            shutil.rmtree(destDir)
-        os.mkdir(destDir)
+        if os.path.exists(DEST_DIR):
+            shutil.rmtree(DEST_DIR)
+        os.mkdir(DEST_DIR)
 
     def compile(self) -> None:
-        try:
-            dataset = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', DATASET))
-            srcDir = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', SRC_DIR))
-            destDir = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', DEST_DIR))
-            taxcoReportPath = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', TAXCO_REPORT_PATH))
-            contentReportPath = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', CONTENT_REPORT_PATH))
-            
+        try:            
             # Handle paths checking and creation
-            self.handlePaths(dataset, srcDir, destDir)
+            self.handlePaths()
             
             logging.info("Starting content compilation...")
             
-            parseDatasetFile(dataset)
+            parseDatasetFile()
             logging.info("Dataset parsed successfully")
             
             populateTaxcoReport()
             populateContentReport()
             logging.info("Reports populated")
             
-            initCandidateMediaFiles(srcDir)
+            initCandidateMediaFiles()
             logging.info("Candidate media files initialized")
             
-            parseMarkdownFiles(srcDir, destDir, self.skipLinkCheck)
+            parseMarkdownFiles(self.skipLinkCheck)
             logging.info("Markdown files parsed")
             
             finalizeMediaValidation()
             logging.info("Media validation finalized")
             
-            generateTaxcoReport(taxcoReportPath)
-            generateContentReport(contentReportPath)
+            generateTaxcoReport()
+            generateContentReport()
             logging.info("Reports generated successfully")
             
         except Exception as e:

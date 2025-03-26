@@ -5,16 +5,16 @@ The Content Compiler is a Python script that processes and validates markdown co
 
 1. **Taxonomy Validation**: Validates taxonomy codes in markdown files against a predefined dataset
 2. **Content Processing**: Processes markdown files, updating tags and metadata
-3. **Image Management**: Handles image references and copies images to build directory
+3. **Media file Management**: Handles media file references and copies images to build directory
 4. **Dynamic Link Validation**: Validates and updates dynamic links in content
 5. **Report Generation**: Generates detailed reports on content status and taxonomy implementation
 
 ## Project Structure
 ```
 compiler/
-  ├── start.py              # Main script
+  ├── runCompiler.py        # Main script
   ├── config.py             # Configuration and globals
-  ├── files/                # File processing modules
+  ├── helpers/              # Helper files which do certain tasks in the compiling process
   └── report/               # Report generation modules
 dataset/                    # Taxonomy dataset
 content_repo/               # Source content directory
@@ -88,7 +88,7 @@ Key configuration settings in `config.py`:
 ```python
 SRC_DIR = "content_repo/content"                # Source content directory
 DEST_DIR = "content_repo/build"                 # Build output directory
-DATASET = "dataset.xlsx"                        # Taxonomy dataset file
+DATASET_PATH = "dataset.xlsx"                        # Taxonomy dataset file
 TAXCO_REPORT_PATH = "taxco_report.md"           # Taxonomy report output
 CONTENT_REPORT_PATH = "content_report.md"       # Content report output
 ```
@@ -128,7 +128,6 @@ Shows file processing status:
 - 🏳️ Not required
 - ⚠️ Warning
 - 🔨 Work in progress
-- 🟠 Unnecessary taxonomy
 
 ## Error Handling
 Common error types:
@@ -245,167 +244,3 @@ contentReport = {
    }
 }
 ```
-
-## Detailed script workings
-The following steps and methods are used to compile the md source files to build files
- 
-### `start.py`
-This is the main script file, this runs the show.
-
-#### `def Main`
-Main method which calls the other methods 
-```plantuml
-@startuml
-actor User
-participant Main as "main()"
-participant DatasetParser as "parseDatasetFile()"
-participant TaxcoReportPopulator as "populateTaxcoReport()"
-participant ContentReportPopulator as "populateContentReport()"
-participant MarkdownParser as "parseMarkdownFiles()"
-participant ImageHandler as "fillFailedImages()"
-participant TaxcoReportGenerator as "generateTaxcoReport()"
-participant ContentReportGenerator as "generateContentReport()"
-
-User -> Main: Run start.py
-Main -> Main: Parse arguments
-Main -> Main: Check if dataset file exists
-alt Dataset file not found
-    Main -> User: Print error and exit
-end
-Main -> Main: Check if source directory exists
-alt Source directory not found
-    Main -> User: Print error and exit
-end
-Main -> Main: Remove and recreate destination directory
-Main -> DatasetParser: parseDatasetFile(DATASET)
-Main -> TaxcoReportPopulator: populateTaxcoReport()
-Main -> ContentReportPopulator: populateContentReport()
-Main -> MarkdownParser: parseMarkdownFiles(SRC_DIR, DEST_DIR, skipDynamicLinkCheck)
-Main -> ImageHandler: fillFailedImages(SRC_DIR, DEST_DIR)
-Main -> TaxcoReportGenerator: generateTaxcoReport(TAXCO_REPORT_PATH)
-Main -> ContentReportGenerator: generateContentReport(CONTENT_REPORT_PATH)
-Main -> User: Print execution time
-@enduml
-```
-
-## Core Processing Functions
-
-### Content Processing Flow
-The script executes the following core functions in sequence:
-
-1. `parseDatasetFile(DATASET)`
-   - Reads Excel dataset file using pandas
-   - Converts data to CSV format for processing
-   - Removes empty rows from dataset
-   - Stores parsed data in global dataset list
-   - Handles file not found and parsing errors
-
-2. `populateTaxcoReport()`
-   - Pre-fills taxonomy report with dataset entries
-   - Creates entries for each TC1 code
-   - Initializes status as 'not implemented'
-   - Sets up process and step information
-   - Prepares implementation level tracking
-
-3. `populateContentReport()`
-   - Pre-fills content report with dataset entries
-   - Creates entries for each TC3 code
-   - Initializes status as 'not implemented'
-   - Sets up subject and level information
-   - Prepares implementation level tracking
-
-4. `parseMarkdownFiles(SRC_DIR, DEST_DIR, skipDynamicLinkCheck)`
-   - Processes all markdown files in source directory
-   - Validates taxonomy codes and updates tags
-   - Checks dynamic links (unless skipped)
-   - Copies processed files to build directory
-   - Tracks success/failure status for reporting
-
-5. `fillFailedImages(SRC_DIR, DEST_DIR)`
-   - Scans for image references in markdown files
-   - Copies referenced images to build directory
-   - Identifies unused or missing images
-   - Maintains folder structure when copying
-   - Reports failed image operations
-
-6. `generateTaxcoReport(TAXCO_REPORT_PATH)`
-   - Generates taxonomy implementation report
-   - Shows status for each taxonomy code level
-   - Indicates which process steps are implemented
-   - Provides overview of taxonomy coverage
-   - Formats report in markdown with status icons
-
-7. `generateContentReport(CONTENT_REPORT_PATH)`
-   - Creates detailed content status report
-   - Lists work-in-progress files
-   - Shows files with validation errors
-   - Reports unused/missing images
-   - Lists successfully processed files
-   - Includes error details and file paths
-
-### Content Processing Pipeline Architecture
-```plantuml
-@startuml
-skinparam componentStyle uml2
-skinparam backgroundColor transparent
-skinparam defaultFontName Arial
-skinparam arrowColor #666666
-skinparam componentBorderColor #666666
-
-' Data stores
-database "Dataset\n(Excel)" as dataset
-database "Global State" as state {
-    [dataset list]
-    [taxcoReport]
-    [contentReport]
-    [parsedFiles]
-    [failedFiles]
-    [failedImages]
-}
-folder "Source" as src {
-    [Markdown Files] as md
-    [Images] as img
-}
-folder "Build" as build {
-    [Processed MD] as pmd
-    [Copied Images] as cimg
-}
-folder "Reports" as reports {
-    [Taxonomy Report] as taxco
-    [Content Report] as content
-}
-
-' Processing components
-component "parseDatasetFile()" as parser
-component "populateTaxcoReport()" as taxcoPopulator
-component "populateContentReport()" as contentPopulator
-component "parseMarkdownFiles()" as mdParser
-component "fillFailedImages()" as imgHandler
-component "generateTaxcoReport()" as taxcoGen
-component "generateContentReport()" as contentGen
-
-' Flow
-dataset --> parser
-parser --> state : "Fills dataset list"
-state --> taxcoPopulator : "Read dataset"
-taxcoPopulator --> state : "Initialize taxcoReport"
-state --> contentPopulator : "Read dataset"
-contentPopulator --> state : "Initialize contentReport"
-
-md --> mdParser
-mdParser --> pmd : "Process & copy"
-mdParser --> state : "Update reports"
-
-img --> imgHandler
-imgHandler --> cimg : "Copy used images"
-imgHandler --> state : "Track failed images"
-
-state --> taxcoGen
-taxcoGen --> taxco : "Generate report"
-
-state --> contentGen
-contentGen --> content : "Generate report"
-
-@enduml
-```
-

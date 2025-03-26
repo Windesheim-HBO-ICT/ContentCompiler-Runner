@@ -29,7 +29,7 @@ class TestRunner:
     def setupPaths(self) -> None:
         self.SRC_DIR = Path(__file__).resolve().parents[0] / 'test_cases'
         self.DEST_DIR = Path(__file__).resolve().parents[0] / 'test_cases_build'
-        self.DATASET = Path(__file__).resolve().parents[0] / 'test_dataset.xlsx'
+        self.DATASET_PATH = Path(__file__).resolve().parents[0] / 'test_dataset.xlsx'
         self.TAXCO_REPORT_PATH = Path(__file__).resolve().parents[0] / 'reports/actual_taxco_test_report.md'
         self.CONTENT_REPORT_PATH = Path(__file__).resolve().parents[0] / 'reports/actual_content_test_report.md'
         self.EXPECTED_TAXCO_TEST_REPORT_PATH = 'tests/reports/expected_taxco_test_report.md'
@@ -68,8 +68,8 @@ class TestRunner:
         return expectedAmountOfDraftFiles == actualAmountOfDraftFiles
 
     def validatePaths(self) -> None:
-        if not os.path.exists(self.DATASET):
-            raise FileNotFoundError(f"Dataset file {self.DATASET} not found.")
+        if not os.path.exists(self.DATASET_PATH):
+            raise FileNotFoundError(f"Dataset file {self.DATASET_PATH} not found.")
         if not os.path.exists(self.SRC_DIR):
             raise FileNotFoundError(f"Source directory {self.SRC_DIR} not found.")
 
@@ -85,7 +85,7 @@ class TestRunner:
             
             logging.info("Starting test execution...")
             
-            parseDatasetFile(self.DATASET)
+            parseDatasetFile(self.DATASET_PATH)
             logging.info("Dataset parsed successfully")
             
             populateTaxcoReport()

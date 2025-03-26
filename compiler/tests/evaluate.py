@@ -1,13 +1,8 @@
-# Imports
 import os, time, shutil
 from pathlib import Path
-# Variables
-from config import VERBOSE
-# Functions
-from helpers.parse import parseMarkdownFiles
+from helpers.parseContent import parseMarkdownFiles
 
 markdownCountCheck = False  
-
 
 # Returns the amount of markdown files in a folder
 def checkMarkdownFilesCount(folderPath):
@@ -29,9 +24,8 @@ def evaluateTests():
     shutil.rmtree(destDir) 
     endTime = time.time()
     
-    if VERBOSE: 
-        print(f"Execution time: {endTime - startTime:.2f} seconds")
-        print("-----------")
+    print(f"Execution time: {endTime - startTime:.2f} seconds")
+    print("-----------")
 
     return markdownCountCheck   
 

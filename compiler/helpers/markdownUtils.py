@@ -3,7 +3,7 @@ import logging
 from config import (
     dataset, contentReport, PROCES_COL, PROCESSTAP_COL, TC1_COL, TC2_COL, TC3_COL, 
     ERROR_INVALID_TAXCO, ERROR_NO_TAXCO_FOUND, 
-    ERROR_TAXCO_NOT_FOUND, ERROR_TAXCO_NOT_NEEDED,
+    ERROR_TAXCO_NOT_FOUND, ERROR_TAXCO_NOT_NEEDED, FILE_HAS_IGNORE_TAG,
     DOUBLE_BOLD_IN_TEXT_REGEX, TAXONOMIE_REGEX, TODO_REGEX, TITLE_REGEX, FRONTMATTER_REGEX, FRONTMATTER_KEY_REGEX
 )
 from report.generateTaxcoReport import updateProcessReportData, updateSubjectReportData
@@ -97,51 +97,49 @@ def generateTags(taxonomies, existingTags, filePath):
 def splitTaxonomie(taxonomie):
     return taxonomie.split('.')
 
-# Helper function to extract specific values from the content of a markdown file.
-def extractHeaderValues(content, fieldName):
+def extractHeaderValues(content: str, fieldName: str):
+    """
+    Extracts values associated with a specific field name in the header of a markdown file.
+    """
     lines = content.splitlines()
     values = []
+    field_prefix = f'{fieldName}:'
 
     for i, line in enumerate(lines):
-        if line.startswith(f'{fieldName}:'):
-            # Handle case where the field has a single value
-            if ':' in line and len(line.split(':', 1)[1].strip()) > 0:
-                values.append(line.split(':', 1)[1].strip())
+        if line.startswith(field_prefix):
+            # Extract single value if present on the same line
+            value = line[len(field_prefix):].strip()
+            if value:
+                values.append(value)
             else:
-                # Handle case where the field is a list
-                for j in range(i + 1, len(lines)):
-                    subLine = lines[j].strip()
+                # Extract list values if present in subsequent lines
+                for subLine in lines[i + 1:]:
+                    subLine = subLine.strip()
                     if subLine.startswith('- '):
-                        values.append(subLine.lstrip('- ').strip())
+                        values.append(subLine[2:].strip())
                     else:
                         break
             break
 
-    return values if values else None
+    return values or None
 
 # Helper function to find all the To-Do items in the content of a markdown file.	
 def findWIPItems(content):
     return re.findall(TODO_REGEX, content)
 
 # Helper function to check if a file has an ignore tag.
-def hasIgnoreTag(content, filePath):
+def hasIgnoreTag(filePath, content):
     ignoreTAG = extractHeaderValues(content, 'ignore')
 
     if ignoreTAG and "true" in ignoreTAG:
-        logging.info(f"File has an ignore tag, ignoring file: {filePath}")
+        logging.info(f"{FILE_HAS_IGNORE_TAG} `{filePath}`")
         return True
 
     return False
 
 # Helper function to check if the filename matches the title tag in the markdown file.
 def compareFileNameAndTitel(filePath, content):
-    titel = extractHeaderValues(content, 'title')
-    fileName = filePath.stem
-    
-    if titel != [fileName]:
-        return False
-    
-    return True
+    return extractHeaderValues(content, 'title') != filePath.stem 
 
 # Helper function to check for bold in markdown titel
 def checkForBoldInTitel(content):

@@ -1,6 +1,6 @@
 from report.table import generateMarkdownTable
 from config import taxcoReport, contentReport
-from config import LT, DT, OI, PI, FAIL_CIRCLE_ICON, SUCCESS_ICON, NOT_NECESSARY_ICON
+from config import LT, DT, OI, PI, FAIL_CIRCLE_ICON, SUCCESS_ICON, NOT_NECESSARY_ICON, TAXCO_REPORT_PATH
 
 
 # Update the taxco list with the new values
@@ -42,8 +42,8 @@ def updateSubjectReportData(tc1, tc2, tc3, fileType):
     updateSubjectReportRow(tc1, tc2, tc3, fileType, DT)
 
 # Generate the report based on the taxonomie report, success, and failed reports.
-def generateTaxcoReport(reportPath):
-    with open(reportPath, "w", encoding="utf-8") as f:
+def generateTaxcoReport():
+    with open(TAXCO_REPORT_PATH, "w", encoding="utf-8") as f:
         f.write('---\ndraft: true\n---\n')
         
         f.write('## Rapport 1 - Processtappen\n')

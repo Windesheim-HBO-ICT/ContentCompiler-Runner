@@ -1,37 +1,38 @@
-import re
-import os
-import shutil
-import logging
 from pathlib import Path
-
+import re, os, shutil, logging
+from report.table import createMediaTableRow
 from config import (
-    SRC_DIR,
-    VALID_DYNAMIC_LINK_PREFIXES, ERROR_INVALID_DYNAMIC_LINK, DYNAMIC_LINK_REGEX,
-    IMAGE_REGEX, PDF_REGEX,
-    ERROR_IMAGE_NOT_FOUND, ERROR_IMAGE_NOT_USED,
-    ERROR_PDF_NOT_FOUND, ERROR_PDF_NOT_USED, ALT_PDF_REGEX,
-    failedMediaFiles
+    failedMediaFiles,
+    SRC_DIR, DEST_DIR,
+    TODO_ITEMS_ICON,
+    VALID_DYNAMIC_LINK_PREFIXES, IGNORE_FOLDERS,
+    DYNAMIC_LINK_REGEX, IMAGE_REGEX, PDF_REGEX,
+    ERROR_PDF_NOT_USED, ERROR_IMAGE_NOT_USED, ERROR_INVALID_DYNAMIC_LINK, 
+    ERROR_IMAGE_NOT_FOUND, ERROR_PDF_NOT_FOUND, ERROR_PDF_FORMAT_INVALID, ALT_PDF_REGEX
 )
 
 # Global candidate list for media files (images and PDFs)
 candidateMediaFiles = []
 
-def initCandidateMediaFiles(srcDir: str) -> None:
+def initCandidateMediaFiles():
     """
-    Initialize the global candidateMediaFiles list by collecting all files in srcDir that might be referenced (images, PDFs, etc.).
+    Initialize the global candidateMediaFiles list by collecting all files in SRC_DIR that might be referenced (images, PDFs, etc.).
     """
     global candidateMediaFiles
     candidateMediaFiles = []
-    srcPath = Path(srcDir).resolve()
 
-    for root, dirs, files in os.walk(srcPath):
+    for root, dirs, files in os.walk(SRC_DIR):
+        # Skip folders in IGNORE_FOLDERS
+        dirs[:] = [d for d in dirs if d not in IGNORE_FOLDERS]
+        
+        # Add all files to the candidate list
         for file in files:
             # Ignore files with extensions like .md, .github, etc.
             if not file.endswith(('.md', '.github', '.gitignore')):
                 candidateMediaFiles.append(Path(root) / file)
 
 
-def processMediaLinks(filePath: Path, content: str, srcDir: str, destDir: str,skipValidateDynamicLinks: bool = False):
+def processMediaLinks(filePath: Path, content: str, skipValidateDynamicLinks: bool = False):
     """
     Combines dynamic link processing, image validation, and PDF validation.
     Returns updated content and a list of error messages.
@@ -39,15 +40,15 @@ def processMediaLinks(filePath: Path, content: str, srcDir: str, destDir: str,sk
     errors = []
 
     # 1. Process dynamic links
-    content, dynErrors = processDynamicLinks(filePath, content, srcDir, skipValidateDynamicLinks)
+    content, dynErrors = processDynamicLinks(filePath, content, skipValidateDynamicLinks)
     errors.extend(dynErrors)
 
     # 2. Validate/copy images
-    imgErrors = validateImageLinks(content, srcDir, destDir)
+    imgErrors = validateImageLinks(content)
     errors.extend(imgErrors)
 
     # 3. Validate/copy PDFs
-    pdfErrors = validatePdfLinks(content, srcDir, destDir)
+    pdfErrors = validatePdfLinks(content)
     errors.extend(pdfErrors)
 
     return content, errors
@@ -63,17 +64,17 @@ def finalizeMediaValidation() -> None:
 
     for file in candidateMediaFiles:
         if file.suffix.lower() == '.pdf':
-            msg = f"{ERROR_PDF_NOT_USED} `{file.name}`"
+            error = f"{ERROR_PDF_NOT_USED} `{file.name}`"
         else:
-            msg = f"{ERROR_IMAGE_NOT_USED} `{file.name}`"
-        logging.warning(msg)
-        failedMediaFiles.append(msg)
+            error = f"{ERROR_IMAGE_NOT_USED} `{file.name}`"
 
-    # Clear the list
-    candidateMediaFiles = []
+        logging.warning(error)
+        
+        filePath = Path(SRC_DIR) / file
+        failedMediaFiles.append(createMediaTableRow(TODO_ITEMS_ICON, file.name, filePath, SRC_DIR, error))
 
 
-def processDynamicLinks(filePath: Path, content: str, srcDir: str, skipValidateDynamicLinks: bool):
+def processDynamicLinks(filePath: Path, content: str, skipValidateDynamicLinks: bool):
     """
     Process dynamic links in the markdown content:
       - Removes 'content/' from links
@@ -98,14 +99,14 @@ def processDynamicLinks(filePath: Path, content: str, srcDir: str, skipValidateD
             continue
 
         # Check if the link is valid
-        if not isLinkValid(newLink, srcDir):
+        if not isLinkValid(newLink):
             # Escape pipe characters for Markdown
             errors.append(f"{ERROR_INVALID_DYNAMIC_LINK} `{newLink.replace('|', '\|')}`")
             logging.warning(f"{ERROR_INVALID_DYNAMIC_LINK} `{newLink}` in file: {filePath}")
 
     return content, errors
 
-def isLinkValid(dynamicLink: str, srcDir: str) -> bool:
+def isLinkValid(dynamicLink: str) -> bool:
     """
     Check if a dynamic link is valid (the referenced file actually exists).
     """
@@ -119,7 +120,7 @@ def isLinkValid(dynamicLink: str, srcDir: str) -> bool:
     fileName = linkParts[0].strip().split('/')[-1]
 
     # Search in all subdirectories
-    for root, dirs, files in os.walk(srcDir):
+    for root, dirs, files in os.walk(SRC_DIR):
         for file in files:
             if file.startswith(fileName):
                 # If the file is found, the link is valid, so break the loop
@@ -128,7 +129,7 @@ def isLinkValid(dynamicLink: str, srcDir: str) -> bool:
     return False
 
 
-def validateImageLinks(content: str, srcDir: str, destDir: str) -> list[str]:
+def validateImageLinks(content: str) -> list[str]:
     """
     Search for image links (IMAGE_REGEX).
     If the file is found, copy it to build folder. If not, log an error.
@@ -136,11 +137,6 @@ def validateImageLinks(content: str, srcDir: str, destDir: str) -> list[str]:
     """
     errors = []
     imageMatches = re.findall(IMAGE_REGEX, content)
-
-    srcPath = Path(srcDir).resolve()
-    destPath = Path(destDir).resolve()
-
-    global candidateMediaFiles
 
     for match in imageMatches:
         # match is a tuple from the capture groups
@@ -162,12 +158,12 @@ def validateImageLinks(content: str, srcDir: str, destDir: str) -> list[str]:
         # If the file is found, copy it to build folder
         if foundFile and foundFile.exists():
             try:
-                relPath = foundFile.relative_to(srcPath)
+                relPath = foundFile.relative_to(SRC_DIR)
             except ValueError:
                 # If not relative to srcDir, just use the file name
                 relPath = foundFile.name
 
-            destFile = destPath / relPath
+            destFile = DEST_DIR / relPath
             destFile.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(foundFile, destFile)
             logging.info(f"Copied image '{foundFile}' -> '{destFile}'")
@@ -180,42 +176,38 @@ def validateImageLinks(content: str, srcDir: str, destDir: str) -> list[str]:
     return errors
 
 
-def validatePdfLinks(content: str, srcDir: str, destDir: str) -> list[str]:
+def validatePdfLinks(content: str) -> list[str]:
     """
     - Matches standard PDF links PDF_REGEX. Copies them if found, else logs error.
     - Matches invalid PDF links with ALT_PDF_REGEX. These are flagged as errors.
     Removes found files from candidateMediaFiles to avoid "unused" flags.
     """
     errors = []
-    srcPath = Path(srcDir).resolve()
-    destPath = Path(destDir).resolve()
-
-    global candidateMediaFiles
 
     # Standard PDF links
-    pdfMatches = re.findall(PDF_REGEX, content)
-    for match in pdfMatches:
-        # match is e.g. ('Some text', 'doc.pdf')
-        pdfFileName = match[1].strip()
+    pdfFiles = re.findall(PDF_REGEX, content)
+        
+    for file in pdfFiles:
+        pdfFileName = file.strip()
         
         # Skip remote PDFs
         if pdfFileName.startswith('http://') or pdfFileName.startswith('https://'):
             continue
 
         foundFile = None
-        for f in candidateMediaFiles:
-            if f.name == pdfFileName:
-                foundFile = f
+        for file in candidateMediaFiles:
+            if file.name == pdfFileName:
+                foundFile = file
                 break
 
         # If the file is found, copy it to build folder
         if foundFile and foundFile.exists():
             try:
-                relPath = foundFile.relative_to(srcPath)
+                relPath = foundFile.relative_to(SRC_DIR)
             except ValueError:
                 relPath = foundFile.name
 
-            destFile = destPath / relPath
+            destFile = DEST_DIR / relPath
             destFile.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(foundFile, destFile)
             logging.info(f"Copied PDF '{foundFile}' -> '{destFile}'")
@@ -226,10 +218,11 @@ def validatePdfLinks(content: str, srcDir: str, destDir: str) -> list[str]:
             errors.append(errMsg)
 
     # Invalid PDF links with '!'
-    altPdfMatches = re.findall(ALT_PDF_REGEX, content)
-    for match in altPdfMatches:
-        pdfFileName = match[1].strip()
-        errMsg = f"Invalid PDF link with '!': `{pdfFileName}`"
+    altPdfMatches = re.findall(ALT_PDF_REGEX, content)    
+    for file in altPdfMatches:
+        pdfFileName = file.strip()
+        
+        errMsg = f"{ERROR_PDF_FORMAT_INVALID} `{pdfFileName}`"
         logging.warning(errMsg)
         errors.append(errMsg)
 

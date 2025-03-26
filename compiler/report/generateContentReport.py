@@ -1,11 +1,11 @@
 from report.table import formatFileReportTable, formatMediaReportTable
-from config import WIPFiles, failedFiles, failedMediaFiles, parsedFiles, ignoredFiles
-from config import WARNING_ICON, FAIL_CROSS_ICON, NOT_NEEDED_ICON
+from config import WIPFiles, failedFiles, failedMediaFiles, parsedFiles, ignoredFiles, CONTENT_REPORT_PATH
+from config import WARNING_ICON, FAIL_CROSS_ICON
 
 
 # Generate the report based on the taxonomie report, success, and failed reports.
-def generateContentReport(reportPath):
-    with open(reportPath, "w", encoding="utf-8") as f:
+def generateContentReport():
+    with open(CONTENT_REPORT_PATH, "w", encoding="utf-8") as f:
         f.write('---\ndraft: true\n---\n')
         
         f.write("## Work-in-progress bestanden\n")
@@ -20,16 +20,13 @@ def generateContentReport(reportPath):
         f.write("*Doel: De onderstaande bestanden zijn niet succesvol verwerkt.*\n\n")
         f.write(FAIL_CROSS_ICON + ' Dit bestand bevat nog geen taxonomie codes.\n')
         f.write(WARNING_ICON + ' Dit bestand bevat fouten. Zie de *Errors* kolom.\n')
-        f.write(NOT_NEEDED_ICON + 'Dit bestand bevat taxonomie codes die niet nodig zijn.\n')
         f.write('\n')
-        # print(failedFiles)
         f.write(formatFileReportTable(sorted(failedFiles, key=lambda x: x['file'])))
 
         f.write('\n\n')
 
         f.write("## Gefaalde media bestanden\n")
         f.write("*Doel: De onderstaande media bestanden worden niet gebruikt in een bestand.*\n\n")
-        print(failedMediaFiles)
         f.write(formatMediaReportTable(sorted(failedMediaFiles, key=lambda x: x['file'])))
         
         f.write('\n\n')

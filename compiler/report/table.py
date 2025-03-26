@@ -1,3 +1,5 @@
+from config import SRC_DIR
+
 # Generate a markdown table string from a list of rows and headers.
 def generateMarkdownTable(headers, rows):
     table = "| " + " | ".join(headers) + " |\n"
@@ -8,11 +10,11 @@ def generateMarkdownTable(headers, rows):
     return table
 
 # Create a new row in the file report based on the status, file path, taxonomie, and tags.
-def createFileReportRow(status, filePath, srcDir, taxonomie, tags, errors):
+def createFileReportRow(status, filePath, taxonomie, tags, errors):
     return {
         "status": status,
         "file": filePath.stem,
-        "path": str(filePath.relative_to(srcDir)),
+        "path": str(filePath.relative_to(SRC_DIR)),
         "taxonomie": '<br>'.join(taxonomie) if taxonomie else "N/A",
         "tags": '<br>'.join(tags) if tags else "N/A",
         "errors": '<br>'.join(errors) if errors else "N/A"
@@ -33,11 +35,11 @@ def formatFileReportTable(fileReport):
     return generateMarkdownTable(headers, rows)
 
 # Create a row for the image report table
-def createMediaTableTow(status, filePath, srcDir, error):
+def createMediaTableRow(statusIcon, fileName, filePath, error):
     return {
-        "status" : status,
-        "file": filePath.stem,
-        "path": str(filePath.relative_to(srcDir)),
+        "status" : statusIcon,
+        "file": fileName,
+        "path": str(filePath.relative_to(SRC_DIR)),
         "error": error,
     }
 
@@ -46,7 +48,7 @@ def formatMediaReportTable(mediaReport):
     headers = ["Status", "Image", "Path", "Error"]
     rows = [[
         file['status'], 
-        file['image'], 
+        file['file'], 
         file['path'],
         file['error']
     ] for file in mediaReport]
