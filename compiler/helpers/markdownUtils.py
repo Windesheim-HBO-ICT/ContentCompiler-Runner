@@ -1,12 +1,11 @@
-import re
-import logging
-from config import (
+import re, logging
+from compiler.config import (
     dataset, contentReport, PROCES_COL, PROCESSTAP_COL, TC1_COL, TC2_COL, TC3_COL, 
     ERROR_INVALID_TAXCO, ERROR_NO_TAXCO_FOUND, ERROR_DOUBLE_PAGE_FRONTMATTER,
     ERROR_TAXCO_NOT_FOUND, ERROR_TAXCO_NOT_NEEDED, FILE_HAS_IGNORE_TAG,
     DOUBLE_BOLD_IN_TEXT_REGEX, TAXONOMIE_REGEX, TODO_REGEX, TITLE_REGEX, FRONTMATTER_REGEX, FRONTMATTER_KEY_REGEX
 )
-from report.generateTaxcoReport import updateProcessReportData, updateSubjectReportData
+from compiler.report.generateTaxcoReport import updateProcessReportData, updateSubjectReportData
 
 
 """

@@ -1,16 +1,16 @@
 import logging
 from pathlib import Path
-from config import (
+from compiler.config import (
 	SRC_DIR, DEST_DIR,
     failedFiles, ignoredFiles, parsedFiles, WIPFiles,
 	SUCCESS_ICON, TODO_ITEMS_ICON, WARNING_ICON,
-    ERROR_DOUBLE_PAGE_FRONTMATTER, ERROR_IGNORE_TAG_USED, ERROR_INVALID_MD_BOLD_TEXT,
+    ERROR_IGNORE_TAG_USED, ERROR_INVALID_MD_BOLD_TEXT,
     ERROR_INVALID_MD_TITELS, ERROR_NO_TAXCO_FOUND, ERROR_TAXCO_NOT_NEEDED,
     ERROR_TITEL_NOT_EQUAL_TO_FILENAME, ERROR_WIP_FOUND, FAIL_CROSS_ICON, IGNORE_FOLDERS,
 )
-from helpers.media import processMediaLinks
-from report.table import createFileReportRow
-from helpers.markdownUtils import (
+from compiler.helpers.media import processMediaLinks
+from compiler.report.table import createFileReportRow
+from compiler.helpers.markdownUtils import (
     checkForBoldInTitel, checkForDoubleBoldInText, checkForDoublePageFrontmatter,
     isFileNameAndTitelEqual, extractHeaderValues, findWIPItems, generateTags, checkForIgnoreTag
 )

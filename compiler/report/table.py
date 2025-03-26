@@ -1,4 +1,4 @@
-from config import SRC_DIR
+from compiler.config import SRC_DIR
 
 # Generate a markdown table string from a list of rows and headers.
 def generateMarkdownTable(headers, rows):

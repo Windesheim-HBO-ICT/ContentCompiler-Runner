@@ -1,6 +1,6 @@
-from report.table import formatFileReportTable, formatMediaReportTable
-from config import WIPFiles, failedFiles, failedMediaFiles, parsedFiles, ignoredFiles, CONTENT_REPORT_PATH
-from config import WARNING_ICON, FAIL_CROSS_ICON
+from compiler.report.table import formatFileReportTable, formatMediaReportTable
+from compiler.config import WIPFiles, failedFiles, failedMediaFiles, parsedFiles, ignoredFiles, CONTENT_REPORT_PATH
+from compiler.config import WARNING_ICON, FAIL_CROSS_ICON
 
 
 # Generate the report based on the taxonomie report, success, and failed reports.

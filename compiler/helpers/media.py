@@ -1,7 +1,7 @@
 from pathlib import Path
 import re, os, shutil, logging
-from report.table import createMediaTableRow
-from config import (
+from compiler.report.table import createMediaTableRow
+from compiler.config import (
     failedMediaFiles,
     SRC_DIR, DEST_DIR,
     TODO_ITEMS_ICON,
@@ -70,7 +70,7 @@ def processMediaList():
         logging.warning(error)
         
         filePath = Path(SRC_DIR) / file
-        failedMediaFiles.append(createMediaTableRow(TODO_ITEMS_ICON, file.name, filePath, SRC_DIR, error))
+        failedMediaFiles.append(createMediaTableRow(TODO_ITEMS_ICON, file.name, filePath, error))
 
 
 def processDynamicLinks(filePath: Path, content: str, skipValidateDynamicLinks: bool):

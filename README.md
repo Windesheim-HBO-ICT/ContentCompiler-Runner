@@ -142,7 +142,7 @@ Common error types:
 ### Testing
 Run tests using:
 ```bash
-python compiler/tests/runTests.py
+python tests/runTests.py
 ```
 
 Test cases cover:
@@ -162,23 +162,6 @@ Test cases cover:
 2. Create feature branch
 3. Add tests for new features
 4. Submit pull request
-
-## Dependencies
-The script requires the following Python packages:
-- `pandas`: For handling and manipulating the dataset file.
-- `openpyxl`: For reading Excel helpers.
-- `shutil`: For file operations such as copying and removing directories.
-- `argparse`: For parsing command-line arguments.
-- `pathlib`: For handling filesystem paths in an object-oriented way.
-
-##  `config.py`
-This is the config file which stores the different config options.
-It's also used to save the state of the reports.
-- Source Directory: src/content_repo/content
-- Destination Directory: src/content_repo/build
-- Dataset File: src/datasets/dataset.xlsx
-- Taxonomy Report Path: src/content_repo/taxco_report.md
-- Content Report Path: src/content_repo/content_report.md
 
 ## Report structure
 The script produces two md reports.

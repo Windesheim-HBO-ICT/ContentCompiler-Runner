@@ -1,11 +1,11 @@
 import os, time, shutil, argparse, logging
-from helpers.dataset import parseDatasetFile
-from helpers.parseContent import parseMarkdownFiles
-from report.generateTaxcoReport import generateTaxcoReport
-from report.generateContentReport import generateContentReport
-from report.populate import populateTaxcoReport, populateContentReport
-from helpers.media import fillMediaList, processMediaList
-from config import DATASET_PATH, SRC_DIR, DEST_DIR
+from compiler.helpers.dataset import parseDatasetFile
+from compiler.helpers.parseContent import parseMarkdownFiles
+from compiler.report.generateTaxcoReport import generateTaxcoReport
+from compiler.report.generateContentReport import generateContentReport
+from compiler.report.populate import populateTaxcoReport, populateContentReport
+from compiler.helpers.media import fillMediaList, processMediaList
+from compiler.config import DATASET_PATH, SRC_DIR, DEST_DIR
 
 class ContentCompiler:
     def __init__(self, skipLinkCheck: bool = False):

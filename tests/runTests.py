@@ -4,15 +4,24 @@ import shutil, os, sys, logging
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+# Override configuration values before any other imports
+from compiler import config
+config.DATASET_PATH = Path(__file__).resolve().parent / 'test_dataset.xlsx'
+config.SRC_DIR = Path(__file__).resolve().parent / 'test_cases'
+config.DEST_DIR = Path(__file__).resolve().parent / 'test_cases_build'
+config.TAXCO_REPORT_PATH = Path(__file__).resolve().parent / 'reports/actual_taxco_test_report.md'
+config.CONTENT_REPORT_PATH = Path(__file__).resolve().parent / 'reports/actual_content_test_report.md'
+
 # Variables and functions
-from config import failedFiles
-from helpers.images import fillFailedImages
-from report.generateTaxcoReport import generateTaxcoReport
-from report.generateContentReport import generateContentReport
-from helpers.parse import parseMarkdownFiles
-from helpers.dataset import parseDatasetFile
+from compiler.config import failedFiles
+from compiler.helpers.media import fillMediaList, processMediaList
+from compiler.report.generateTaxcoReport import generateTaxcoReport
+from compiler.report.generateContentReport import generateContentReport
+from compiler.helpers.parseContent import parseMarkdownFiles
+from compiler.helpers.dataset import parseDatasetFile
 from tests.evaluate import evaluateTests
-from report.populate import populateTaxcoReport, populateContentReport
+from compiler.report.populate import populateTaxcoReport, populateContentReport
+from compiler.config import DATASET_PATH, SRC_DIR, DEST_DIR
 
 class TestRunner:
     def __init__(self):
@@ -27,11 +36,6 @@ class TestRunner:
         )
 
     def setupPaths(self):
-        self.SRC_DIR = Path(__file__).resolve().parents[0] / 'test_cases'
-        self.DEST_DIR = Path(__file__).resolve().parents[0] / 'test_cases_build'
-        self.DATASET_PATH = Path(__file__).resolve().parents[0] / 'test_dataset.xlsx'
-        self.TAXCO_REPORT_PATH = Path(__file__).resolve().parents[0] / 'reports/actual_taxco_test_report.md'
-        self.CONTENT_REPORT_PATH = Path(__file__).resolve().parents[0] / 'reports/actual_content_test_report.md'
         self.EXPECTED_TAXCO_TEST_REPORT_PATH = 'tests/reports/expected_taxco_test_report.md'
         self.ACTUAL_TAXCO_TEST_REPORT_PATH = 'tests/reports/actual_taxco_test_report.md'
         self.EXPECTED_CONTENT_TEST_REPORT_PATH = 'tests/reports/expected_content_test_report.md'
@@ -66,40 +70,42 @@ class TestRunner:
                 logging.error(f"An error occurred: {e}")
                 
         return expectedAmountOfDraftFiles == actualAmountOfDraftFiles
-
-    def validatePaths(self):
-        if not os.path.exists(self.DATASET_PATH):
-            raise FileNotFoundError(f"Dataset file {self.DATASET_PATH} not found.")
-        if not os.path.exists(self.SRC_DIR):
-            raise FileNotFoundError(f"Source directory {self.SRC_DIR} not found.")
-
-    def initializeDestDir(self):
-        if os.path.exists(self.DEST_DIR):
-            shutil.rmtree(self.DEST_DIR)
-        os.mkdir(self.DEST_DIR)
+        
+    def handlePaths(self):
+        # Check if the dataset and source directory exist
+        if not os.path.exists(DATASET_PATH):
+            raise FileNotFoundError(f"Dataset file {DATASET_PATH} not found.")
+        if not os.path.exists(SRC_DIR):
+            raise FileNotFoundError(f"Source directory {DATASET_PATH} not found.")
+        
+        # Create destination directory
+        if os.path.exists(DEST_DIR):
+            shutil.rmtree(DEST_DIR)
+        os.mkdir(DEST_DIR)
 
     def run(self):
         try:
-            self.validatePaths()
-            self.initializeDestDir()
+            self.handlePaths()
             
             logging.info("Starting test execution...")
             
-            parseDatasetFile(self.DATASET_PATH)
+            parseDatasetFile()
             logging.info("Dataset parsed successfully")
+            
+            fillMediaList()
             
             populateTaxcoReport()
             populateContentReport()
             logging.info("Reports populated")
             
-            parseMarkdownFiles(self.SRC_DIR, self.DEST_DIR, False)
+            parseMarkdownFiles(False)
             logging.info("Markdown files parsed")
             
-            fillFailedImages(self.SRC_DIR, self.DEST_DIR)
-            logging.info("Failed images processed")
+            processMediaList()
+            logging.info("Media validation finalized")
             
-            generateTaxcoReport(self.TAXCO_REPORT_PATH)
-            generateContentReport(self.CONTENT_REPORT_PATH)
+            generateTaxcoReport()
+            generateContentReport()
             logging.info("Reports generated")
 
             if not self.validateTestReport(self.EXPECTED_TAXCO_TEST_REPORT_PATH, self.ACTUAL_TAXCO_TEST_REPORT_PATH):

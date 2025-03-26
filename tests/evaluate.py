@@ -1,6 +1,6 @@
 import os, time, shutil
 from pathlib import Path
-from helpers.parseContent import parseMarkdownFiles
+from compiler.helpers.parseContent import parseMarkdownFiles
 
 markdownCountCheck = False  
 
@@ -17,7 +17,7 @@ def evaluateTests():
         shutil.rmtree(destDir)
         os.mkdir(destDir)
         
-    parseMarkdownFiles(srcDir, destDir, True)
+    parseMarkdownFiles(True)
 
     markdownCountCheck = checkMarkdownFilesCount(srcDir) == checkMarkdownFilesCount(destDir)
 

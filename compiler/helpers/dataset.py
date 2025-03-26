@@ -1,10 +1,8 @@
-import csv, logging
-import pandas as pd
-from config import (
+import csv, logging, pandas
+from compiler.config import (
     dataset, DATASET_PATH,
     TC1_COL, TC2_COL, TC3_COL, PROCES_COL, PROCESSTAP_COL, LT_COL, OI_COL, PI_COL, DT_COL
 )
-
 
 # Helper function to check if a row is empty
 def checkRowEmpty(row):
@@ -15,7 +13,7 @@ def checkRowEmpty(row):
 def parseDatasetFile():
     try:
         # Open the dataset and parse it to a list
-        df = pd.read_excel(DATASET_PATH)
+        df = pandas.read_excel(DATASET_PATH)
         csvData = df.to_csv(index=False, sep=';')
         reader = csv.reader(csvData.splitlines(), delimiter=';', quotechar='|')
         dataset.extend(list(reader)[1:])

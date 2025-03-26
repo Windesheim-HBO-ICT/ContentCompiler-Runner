@@ -1,6 +1,6 @@
-from report.table import generateMarkdownTable
-from config import taxcoReport, contentReport
-from config import LT, DT, OI, PI, FAIL_CIRCLE_ICON, SUCCESS_ICON, NOT_NECESSARY_ICON, TAXCO_REPORT_PATH
+from compiler.report.table import generateMarkdownTable
+from compiler.config import taxcoReport, contentReport
+from compiler.config import LT, DT, OI, PI, FAIL_CIRCLE_ICON, SUCCESS_ICON, NOT_NECESSARY_ICON, TAXCO_REPORT_PATH
 
 
 # Update the taxco list with the new values
