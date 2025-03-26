@@ -2,7 +2,7 @@ import re
 import logging
 from config import (
     dataset, contentReport, PROCES_COL, PROCESSTAP_COL, TC1_COL, TC2_COL, TC3_COL, 
-    ERROR_INVALID_TAXCO, ERROR_NO_TAXCO_FOUND, 
+    ERROR_INVALID_TAXCO, ERROR_NO_TAXCO_FOUND, ERROR_DOUBLE_PAGE_FRONTMATTER,
     ERROR_TAXCO_NOT_FOUND, ERROR_TAXCO_NOT_NEEDED, FILE_HAS_IGNORE_TAG,
     DOUBLE_BOLD_IN_TEXT_REGEX, TAXONOMIE_REGEX, TODO_REGEX, TITLE_REGEX, FRONTMATTER_REGEX, FRONTMATTER_KEY_REGEX
 )
@@ -128,7 +128,7 @@ def findWIPItems(content):
     return re.findall(TODO_REGEX, content)
 
 # Helper function to check if a file has an ignore tag.
-def hasIgnoreTag(filePath, content):
+def checkForIgnoreTag(filePath, content):
     ignoreTAG = extractHeaderValues(content, 'ignore')
 
     if ignoreTAG and "true" in ignoreTAG:
@@ -167,16 +167,19 @@ def checkForDoubleBoldInText(content):
     return invalidTexts
 
 # Helper function to check for double page frontmatter
-def checkForDoublePageFrontmatter(content):
+def checkForDoublePageFrontmatter(filePath, content):
     frontmatter_match = re.search(FRONTMATTER_REGEX, content, re.DOTALL | re.MULTILINE)
     if not frontmatter_match:
         return []
-
+    
     frontmatter = frontmatter_match.group(1)
     keys = re.findall(FRONTMATTER_KEY_REGEX, frontmatter, re.MULTILINE)
     duplicate_keys = {key for key in keys if keys.count(key) > 1}
     
+    errors = []
     if duplicate_keys:
-        return [f"Duplicate keys found in frontmatter: {', '.join(duplicate_keys)}"]
-    
-    return []
+        error_msg = f"{ERROR_DOUBLE_PAGE_FRONTMATTER}: '{', '.join(duplicate_keys)}' 'in: {filePath}'"
+        if filePath:
+            logging.warning(error_msg)
+        errors.append(error_msg)
+    return errors

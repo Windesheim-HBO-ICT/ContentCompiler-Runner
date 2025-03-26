@@ -12,7 +12,7 @@ from helpers.media import processMediaLinks
 from report.table import createFileReportRow
 from helpers.markdownUtils import (
     checkForBoldInTitel, checkForDoubleBoldInText, checkForDoublePageFrontmatter,
-    isFileNameAndTitelEqual, extractHeaderValues, findWIPItems, generateTags, hasIgnoreTag
+    isFileNameAndTitelEqual, extractHeaderValues, findWIPItems, generateTags, checkForIgnoreTag
 )
 
 
@@ -20,82 +20,96 @@ from helpers.markdownUtils import (
 def parseMarkdownFiles(skipValidateDynamicLinks):
 	# Loop through all markdown files in the source directory
 	for filePath in Path(SRC_DIR).rglob('*.md'):
-		# Determine the destination path where the new markdown file will be saved
-		relativePath = filePath.relative_to(SRC_DIR)
-		destFilePath = DEST_DIR / relativePath
-  
-		errors = []
-		tagErrors = []
-		todoItems = []
-		taxonomie = []
-		newTags = []
-		isDraft = False
-		isIgnore = False
-
-        # Skip certain folders
-		if any(folder in str(filePath) for folder in IGNORE_FOLDERS):
+		# Skip certain folders
+		if shouldSkipFile(filePath):
 			logging.info(f"Skipping folder: {filePath}")
 			continue
-
-		# Read the content of the file
-		with open(filePath, 'r', encoding='utf-8') as f:
-			content = f.read()
-
-		# Parse the file
+    
+		destFilePath = computeDestFilePath(filePath)
+  
+		# Start reading the content of the file
+		content = readFileContent(filePath)
 		existingTags = extractHeaderValues(content, 'tags')
 		difficulty = extractHeaderValues(content, 'difficulty')
-		doublePageFrontmatter = checkForDoublePageFrontmatter(content)
-		content, mediaErrors = processMediaLinks(filePath, content, skipValidateDynamicLinks)
+  
+		# Check for double page frontmatter
+		errors = checkForDoublePageFrontmatter(filePath, content)
+  
+		# Process media links
+		updatedContent, mediaErrors = processMediaLinks(filePath, content, skipValidateDynamicLinks)
+		errors.extend(mediaErrors)
+  
+		# Check if file has an ignore tag; if so, mark and skip further validations.
+		hasIgnoreTag = checkForIgnoreTag(filePath, updatedContent)
+  
+		# If the file has an ignore tag, skip the taxonomie and tag generation
+		if not hasIgnoreTag:
+			# Process taxonomie and generate tags
+			taxonomie, newTags, tagErrors = processTags(filePath, content, existingTags)
+			errors.extend(tagErrors)
 
-		if doublePageFrontmatter:
-			logging.warning(f"Meerdere pagina frontmatters gevonden in bestand: {filePath}")
-			for error in doublePageFrontmatter:
-				logging.warning(f"{error}")
-			errors.append(ERROR_DOUBLE_PAGE_FRONTMATTER)
-			errors.extend(doublePageFrontmatter)
-
-		# Check if the file has an ignore tag
-		if hasIgnoreTag(filePath, content):
-			isIgnore = True
-			errors.append(ERROR_IGNORE_TAG_USED)
+			# Validate content (WIP items, title matching, markdown formatting)
+			validationErrors, todoItems = validateContent(filePath, content)
+			errors.extend(validationErrors)
 		else:
-			taxonomie = extractHeaderValues(content, 'taxonomie')
-			newTags, tagErrors = generateTags(taxonomie, existingTags, filePath)
-			todoItems = findWIPItems(content)
-			fileNameAndTitelEqual = isFileNameAndTitelEqual(filePath, content)
-			invalidMDTitels = checkForBoldInTitel(content)
-			invalidMDText = checkForDoubleBoldInText(content)
+			taxonomie, newTags, todoItems = [], [], []
 
-			if todoItems:
-				errors.append(f"{ERROR_WIP_FOUND}<br>{'<br>'.join(todoItems)}")
-
-			if not fileNameAndTitelEqual:
-				titel = extractHeaderValues(content, 'title')
-				logging.warning(f"Titel '{titel}' komt niet overeen met bestandsnaam '{filePath.stem}' in bestand: '{filePath}'")
-				errors.append(ERROR_TITEL_NOT_EQUAL_TO_FILENAME)
-				errors.append(f"- Titel: {titel}")
-				errors.append(f"- Bestandsnaam: {filePath.stem}")
-
-			if invalidMDTitels:
-				titel = extractHeaderValues(content, 'title')
-				logging.warning(f"Titel '{invalidMDTitels}' is/zijn verkeerd opgemaakt in bestand: '{filePath}'")
-				errors.append(ERROR_INVALID_MD_TITELS)
-				errors.extend([f"- {error.replace('**', '\\*\\*')}" for error in invalidMDTitels])
-
-			if invalidMDText:
-				logging.warning(f"Tekst is verkeerd opgemaakt in bestand: '{filePath}'")
-				errors.append(ERROR_INVALID_MD_BOLD_TEXT)
-				errors.extend([f"- {error.replace('**', '\\*\\*')}" for error in invalidMDText])
-
-		# Combine all errors
-		errors = mediaErrors + tagErrors + errors
-
-        # If there are any errors, the file is considered a draft unless the ignore tag is used
-		if errors and not isIgnore:
-			isDraft = True
+		# If there are any errors, the file is considered a draft unless the ignore tag is used
+		isDraft = True if errors and not hasIgnoreTag else False
 
 		appendFileToSpecificList(errors, todoItems, filePath, taxonomie, newTags)
-		saveParsedFile(filePath, taxonomie, newTags, difficulty, isDraft, isIgnore, content, destFilePath)
+		saveParsedFile(filePath, taxonomie, newTags, difficulty, isDraft, hasIgnoreTag, content, destFilePath)
+
+# Helper function to determine if a file should be skipped
+def shouldSkipFile(filePath):
+    return any(folder in str(filePath) for folder in IGNORE_FOLDERS)
+
+# Helper function to compute the destination file path
+def computeDestFilePath(filePath):
+    relativePath = filePath.relative_to(SRC_DIR)
+    return DEST_DIR / relativePath
+
+# Helper function to read the content of a file
+def readFileContent(filePath):
+    with open(filePath, 'r', encoding='utf-8') as f:
+        return f.read()
+
+# Helper function to process the tags of a markdown file
+def processTags(filePath, content, existingTags):
+    taxonomie = extractHeaderValues(content, 'taxonomie')
+    newTags, tagErrors = generateTags(taxonomie, existingTags, filePath)
+    return taxonomie, newTags, tagErrors
+
+# Helper function to validate the content of a markdown file
+def validateContent(filePath, content):
+    errors = []
+    todoItems = findWIPItems(content)
+    fileNameAndTitelEqual = isFileNameAndTitelEqual(filePath, content)
+    invalidMDTitels = checkForBoldInTitel(content)
+    invalidMDText = checkForDoubleBoldInText(content)
+
+    if todoItems:
+        errors.append(f"{ERROR_WIP_FOUND}<br>{'<br>'.join(todoItems)}")
+
+    if not fileNameAndTitelEqual:
+        titel = extractHeaderValues(content, 'title')
+        logging.warning(f"Titel '{titel}' komt niet overeen met bestandsnaam '{filePath.stem}' in bestand: '{filePath}'")
+        errors.append(ERROR_TITEL_NOT_EQUAL_TO_FILENAME)
+        errors.append(f"- Titel: {titel}")
+        errors.append(f"- Bestandsnaam: {filePath.stem}")
+
+    if invalidMDTitels:
+        titel = extractHeaderValues(content, 'title')
+        logging.warning(f"Titel '{invalidMDTitels}' is/zijn verkeerd opgemaakt in bestand: '{filePath}'")
+        errors.append(ERROR_INVALID_MD_TITELS)
+        errors.extend([f"- {error.replace('**', '\\*\\*')}" for error in invalidMDTitels])
+
+    if invalidMDText:
+        logging.warning(f"Tekst is verkeerd opgemaakt in bestand: '{filePath}'")
+        errors.append(ERROR_INVALID_MD_BOLD_TEXT)
+        errors.extend([f"- {error.replace('**', '\\*\\*')}" for error in invalidMDText])
+
+    return errors, todoItems
 
 # Fill the different lists used for the report
 def appendFileToSpecificList(errors, todoItems, filePath, taxonomie, tags):
@@ -119,7 +133,7 @@ def appendFileToSpecificList(errors, todoItems, filePath, taxonomie, tags):
 	targetList.append(createFileReportRow(icon, filePath, taxonomie, tags, errors))
 
 # Combines everything into a new md file
-def saveParsedFile(filePath, taxonomie, tags, difficulty, isDraft, isIgnore, content, destFilePath):
+def saveParsedFile(filePath, taxonomie, tags, difficulty, isDraft, hasIgnoreTag, content, destFilePath):
     newContent = (
         f"---\ntitle: {filePath.stem}\ntaxonomie: {taxonomie}\ntags:\n" +
         '\n'.join([f"- {tag}" for tag in tags]) +
@@ -132,7 +146,7 @@ def saveParsedFile(filePath, taxonomie, tags, difficulty, isDraft, isIgnore, con
     if isDraft:
         newContent += "draft: true \n"
         
-    if isIgnore:
+    if hasIgnoreTag:
         newContent += "ignore: true \n"
 
     newContent += "---" + content.split('---', 2)[-1]
