@@ -24,7 +24,7 @@ IGNORE_FOLDERS = ["schrijfwijze"] 															# Folders to ignore when parsin
 # Regex patterns
 TODO_REGEX = r'-=[A-Z]+=-' 																    # Regex pattern to find TODO items
 TAXONOMIE_REGEX = r'^[a-z]{2}-\d{1,3}\.[123]\.[^\s\.]+(-[^\s\.]+)*\.(?:OI|DT|PI|LT)$'		# Taxonomie regex
-IMAGE_REGEX = r'!\[\[([^|\]]+\.(?:jpg|jpeg|png|gif|bmp|tiff|webp))(?:\|([^\]]+))?\]\]'      # Image regex
+IMAGE_REGEX = r'!\[\[([^|\]]+\.(?:jpg|jpeg|png|gif|bmp|tiff|webp|gif))(?:\|([^\]]+))?\]\]'  # Image regex
 PDF_REGEX = r'(?<!\!)\[\[([^|\]]+\.pdf)(?:\|[^\]]+)?\]\]'  						            # For valid PDF references: [[myFile.pdf]] or [[myFile.pdf|Alt text]]
 ALT_PDF_REGEX = r'!\[\[([^|\]]+\.pdf)(?:\|[^\]]+)?\]\]'                                     # For invalid PDF references with '!' in front: ![[myFile.pdf]]       
 DOUBLE_BOLD_IN_TEXT_REGEX = r'\*\*\*\*.*?\*\*\*\*'											# Bold in titel regex
