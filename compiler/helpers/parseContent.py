@@ -4,7 +4,7 @@ from compiler.config import (
 	SRC_DIR, DEST_DIR,
     failedFiles, ignoredFiles, parsedFiles, WIPFiles,
 	SUCCESS_ICON, TODO_ITEMS_ICON, WARNING_ICON,
-    ERROR_IGNORE_TAG_USED, ERROR_INVALID_MD_BOLD_TEXT,
+    FILE_HAS_IGNORE_TAG, ERROR_INVALID_MD_BOLD_TEXT,
     ERROR_INVALID_MD_TITELS, ERROR_NO_TAXCO_FOUND, ERROR_TAXCO_NOT_NEEDED,
     ERROR_TITEL_NOT_EQUAL_TO_FILENAME, ERROR_WIP_FOUND, FAIL_CROSS_ICON, IGNORE_FOLDERS,
 )
@@ -53,6 +53,7 @@ def parseMarkdownFiles(skipValidateDynamicLinks):
 			errors.extend(validationErrors)
 		else:
 			taxonomie, newTags, todoItems = [], [], []
+			errors.append(FILE_HAS_IGNORE_TAG)
 
 		# If there are any errors, the file is considered a draft unless the ignore tag is used
 		isDraft = True if errors and not hasIgnoreTag else False
@@ -116,7 +117,7 @@ def validateContent(filePath, content):
 # Fill the different lists used for the report
 def appendFileToSpecificList(errors, todoItems, filePath, taxonomie, tags):
 	if errors:
-		if ERROR_IGNORE_TAG_USED in errors:
+		if FILE_HAS_IGNORE_TAG in errors:
 			icon = WARNING_ICON
 			targetList = ignoredFiles
 		elif ERROR_NO_TAXCO_FOUND in errors or ERROR_TAXCO_NOT_NEEDED in errors:

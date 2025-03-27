@@ -25,6 +25,7 @@ IGNORE_FOLDERS = ["schrijfwijze"] 															# Folders to ignore when parsin
 TODO_REGEX = r'-=[A-Z]+=-' 																    # Regex pattern to find TODO items
 TAXONOMIE_REGEX = r'^[a-z]{2}-\d{1,3}\.[123]\.[^\s\.]+(-[^\s\.]+)*\.(?:OI|DT|PI|LT)$'		# Taxonomie regex
 IMAGE_REGEX = r'!\[\[([^|\]]+\.(?:jpg|jpeg|png|gif|bmp|tiff|webp|gif))(?:\|([^\]]+))?\]\]'  # Image regex
+MD_IMAGE_REGEX = r'!\[([^\]]*)\]\(([^)]+\.(?:jpg|jpeg|png|gif|bmp|tiff|webp))\)'            # Markdown image regex
 PDF_REGEX = r'(?<!\!)\[\[([^|\]]+\.pdf)(?:\|[^\]]+)?\]\]'  						            # For valid PDF references: [[myFile.pdf]] or [[myFile.pdf|Alt text]]
 ALT_PDF_REGEX = r'!\[\[([^|\]]+\.pdf)(?:\|[^\]]+)?\]\]'                                     # For invalid PDF references with '!' in front: ![[myFile.pdf]]       
 DOUBLE_BOLD_IN_TEXT_REGEX = r'\*\*\*\*.*?\*\*\*\*'											# Bold in titel regex
@@ -55,7 +56,6 @@ ERROR_INVALID_TAXCO = "Ongeldige taxco: "
 ERROR_NO_TAXCO_FOUND = "Geen taxco gevonden"
 ERROR_TAXCO_NOT_FOUND = "Taxco niet in dataset: "
 ERROR_TAXCO_NOT_NEEDED = "Taxco gebruikt wanneer niet nodig: "
-ERROR_IGNORE_TAG_USED = "Bestand wordt genegeerd door ignore tag"
 ERROR_IMAGE_NOT_FOUND = "Afbeelding niet gevonden: "
 ERROR_IMAGE_NOT_USED = "Afbeelding wordt niet gebruikt: "
 ERROR_PDF_NOT_FOUND = "PDF niet gevonden: "

@@ -6,7 +6,7 @@ from compiler.config import (
     SRC_DIR, DEST_DIR,
     TODO_ITEMS_ICON,
     VALID_DYNAMIC_LINK_PREFIXES, IGNORE_FOLDERS,
-    DYNAMIC_LINK_REGEX, IMAGE_REGEX, PDF_REGEX,
+    DYNAMIC_LINK_REGEX, IMAGE_REGEX, PDF_REGEX, MD_IMAGE_REGEX,
     ERROR_PDF_NOT_USED, ERROR_IMAGE_NOT_USED, ERROR_INVALID_DYNAMIC_LINK, 
     ERROR_IMAGE_NOT_FOUND, ERROR_PDF_NOT_FOUND, ERROR_PDF_FORMAT_INVALID, ALT_PDF_REGEX
 )
@@ -129,39 +129,31 @@ def isLinkValid(dynamicLink: str) -> bool:
 
 
 def validateImageLinks(content: str) -> list[str]:
-    """
-    Search for image links (IMAGE_REGEX).
-    If the file is found, copy it to build folder. If not, log an error.
-    Removes found files from candidateMediaFiles to avoid "unused" flags.
-    """
     errors = []
-    imageMatches = re.findall(IMAGE_REGEX, content)
-
-    for match in imageMatches:
-        # match is a tuple from the capture groups
-        # e.g. ('someImage.png', 'optionalCaption') or similar
+    
+    # Find wiki-style image matches
+    wikiImageMatches = re.findall(IMAGE_REGEX, content)
+    # Find standard Markdown image matches
+    mdImageMatches = re.findall(MD_IMAGE_REGEX, content)
+    
+    # Process wiki-style image links
+    for match in wikiImageMatches:
         imageName = match[0].strip() if match[0] else ""
         if not imageName:
             continue
-
         # Skip remote images
         if imageName.startswith('http://') or imageName.startswith('https://'):
             continue
-
         foundFile = None
         for file in candidateMediaFiles:
             if file.name == imageName:
                 foundFile = file
                 break
-
-        # If the file is found, copy it to build folder
         if foundFile and foundFile.exists():
             try:
                 relPath = foundFile.relative_to(SRC_DIR)
             except ValueError:
-                # If not relative to srcDir, just use the file name
                 relPath = foundFile.name
-
             destFile = DEST_DIR / relPath
             destFile.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(foundFile, destFile)
@@ -171,7 +163,38 @@ def validateImageLinks(content: str) -> list[str]:
             errMsg = f"{ERROR_IMAGE_NOT_FOUND} `{imageName}`"
             logging.warning(errMsg)
             errors.append(errMsg)
-
+    
+    # Process standard Markdown image links
+    for match in mdImageMatches:
+        # match[0] is the alt text, match[1] is the image path
+        imagePath = match[1].strip() if match[1] else ""
+        if not imagePath:
+            continue
+        # Extract just the file name from the path
+        imageName = Path(imagePath).name
+        # Skip remote images
+        if imagePath.startswith('http://') or imagePath.startswith('https://'):
+            continue
+        foundFile = None
+        for file in candidateMediaFiles:
+            if file.name == imageName:
+                foundFile = file
+                break
+        if foundFile and foundFile.exists():
+            try:
+                relPath = foundFile.relative_to(SRC_DIR)
+            except ValueError:
+                relPath = foundFile.name
+            destFile = DEST_DIR / relPath
+            destFile.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(foundFile, destFile)
+            logging.info(f"Copied image '{foundFile}' -> '{destFile}'")
+            candidateMediaFiles.remove(foundFile)
+        else:
+            errMsg = f"{ERROR_IMAGE_NOT_FOUND} `{imageName}`"
+            logging.warning(errMsg)
+            errors.append(errMsg)
+    
     return errors
 
 
