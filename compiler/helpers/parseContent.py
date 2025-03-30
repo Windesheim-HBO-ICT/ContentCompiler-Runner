@@ -59,9 +59,10 @@ def parseMarkdownFiles(skipValidateDynamicLinks):
 			taxonomie, newTags, todoItems = [], [], []
 			errors.append(FILE_HAS_IGNORE_TAG)
 
-		# If there are any errors, the file is considered a draft unless the ignore tag is used
+		# If there are any errors, the file is considered a draft unless the ignore tag is used	
 		isDraft = True if errors and not hasIgnoreTag else False
-
+		print(filePath)
+		
 		appendFileToSpecificList(errors, todoItems, filePath, taxonomie, newTags)
 		saveParsedFile(filePath, taxonomie, newTags, difficulty, isDraft, hasIgnoreTag, content, destFilePath)
 
@@ -124,8 +125,11 @@ def appendFileToSpecificList(errors, todoItems, filePath, taxonomie, tags):
 		if FILE_HAS_IGNORE_TAG in errors:
 			icon = WARNING_ICON
 			targetList = ignoredFiles
-		elif ERROR_NO_TAXCO_FOUND in errors or ERROR_TAXCO_NOT_NEEDED in errors or any(error.startswith(ERROR_INVALID_TAXCO) for error in errors):
+		elif ERROR_NO_TAXCO_FOUND in errors or ERROR_TAXCO_NOT_NEEDED in errors:
 			icon = FAIL_CROSS_ICON
+			targetList = failedFiles
+		elif any(error.startswith(ERROR_INVALID_TAXCO) for error in errors):
+			icon = WARNING_ICON
 			targetList = failedFiles
 		elif todoItems:
 			icon = TODO_ITEMS_ICON
