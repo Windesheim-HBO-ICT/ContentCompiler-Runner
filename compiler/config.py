@@ -24,7 +24,7 @@ IGNORE_FOLDERS = ["schrijfwijze"] 															# Folders to ignore when parsin
 # Regex patterns
 TODO_REGEX = r'-=[A-Z]+=-' 																    # Regex pattern to find TODO items
 TAXONOMIE_REGEX = r'^[a-z]{2}-\d{1,3}\.[123]\.[^\s\.]+(-[^\s\.]+)*\.(?:OI|DT|PI|LT)$'		# Taxonomie regex
-IMAGE_REGEX = r'!\[\[([^|\]]+\.(?:jpg|jpeg|png|gif|bmp|tiff|webp|gif))(?:\|([^\]]+))?\]\]'  # Image regex
+IMAGE_REGEX = r'!\[\[([^|\]]+\.(?:jpg|jpeg|png|gif|bmp|tiff|webp))(?:\|([^\]]+))?\]\]'      # Image regex
 MD_IMAGE_REGEX = r'!\[([^\]]*)\]\(([^)]+\.(?:jpg|jpeg|png|gif|bmp|tiff|webp))\)'            # Markdown image regex
 PDF_REGEX = r'(?<!\!)\[\[([^|\]]+\.pdf)(?:\|[^\]]+)?\]\]'  						            # For valid PDF references: [[myFile.pdf]] or [[myFile.pdf|Alt text]]
 ALT_PDF_REGEX = r'!\[\[([^|\]]+\.pdf)(?:\|[^\]]+)?\]\]'                                     # For invalid PDF references with '!' in front: ![[myFile.pdf]]       
@@ -67,6 +67,7 @@ ERROR_TITEL_NOT_EQUAL_TO_FILENAME = "Titel komt niet overeen met bestandsnaam"
 ERROR_INVALID_MD_TITELS = "Titels zijn verkeerd opgemaakt"
 ERROR_INVALID_MD_BOLD_TEXT = "Dikgedrukte tekst is verkeerd opgemaakt"
 ERROR_DOUBLE_PAGE_FRONTMATTER = "Meerdere pagina frontmatters gevonden"
+ERROR_NONE_IN_TAGS = "'None' gevonden in de page frontmatter tags"
 
 # Info messages
 FILE_HAS_IGNORE_TAG = "Bestand wordt genegeerd door ignore tag"

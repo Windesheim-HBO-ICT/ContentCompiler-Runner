@@ -1,6 +1,6 @@
 # Imports
 from pathlib import Path
-import shutil, os, sys, logging
+import shutil, os, sys, logging, time, pprint
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -14,14 +14,9 @@ config.CONTENT_REPORT_PATH = Path(__file__).resolve().parent / 'reports/actual_c
 
 # Variables and functions
 from compiler.config import failedFiles
-from compiler.helpers.media import fillMediaList, processMediaList
-from compiler.report.generateTaxcoReport import generateTaxcoReport
-from compiler.report.generateContentReport import generateContentReport
 from compiler.helpers.parseContent import parseMarkdownFiles
-from compiler.helpers.dataset import parseDatasetFile
-from tests.evaluate import evaluateTests
-from compiler.report.populate import populateTaxcoReport, populateContentReport
 from compiler.config import DATASET_PATH, SRC_DIR, DEST_DIR
+from compiler.runCompiler import ContentCompiler
 
 class TestRunner:
     def __init__(self):
@@ -56,7 +51,7 @@ class TestRunner:
         actualAmountOfDraftFiles = 0
         
         for file in failedFiles:
-            fullPath = "compiler/tests/test_cases_build/" + file['path']
+            fullPath = "tests/test_cases_build/" + file['path']
             try:
                 with open(fullPath, 'r', encoding='utf-8') as file:
                     for line in file:
@@ -64,11 +59,15 @@ class TestRunner:
                             draft_value = line.strip().split(':', 1)[1].strip().lower()
                             if draft_value == 'true':
                                 actualAmountOfDraftFiles += 1
+                            break  
+
             except FileNotFoundError:
                 logging.error(f"Error: The file at '{fullPath}' does not exist.")
             except Exception as e:
                 logging.error(f"An error occurred: {e}")
                 
+        print(expectedAmountOfDraftFiles)
+        print(actualAmountOfDraftFiles)
         return expectedAmountOfDraftFiles == actualAmountOfDraftFiles
         
     def handlePaths(self):
@@ -83,30 +82,27 @@ class TestRunner:
             shutil.rmtree(DEST_DIR)
         os.mkdir(DEST_DIR)
 
+    # Returns the amount of markdown files in a folder
+    def checkMarkdownFilesCount(self, folderPath):
+        return len(list(folderPath.glob("*.md")))
+
+    # Evaluate the tests by using check_markdown_files_count and removing the build folder afterwards
+    def evaluateTests(self):
+        srcDir = Path(__file__).resolve().parents[0] / 'content'
+        destDir = Path(__file__).resolve().parents[0] / 'temp_build'
+        if os.path.exists(destDir):
+            shutil.rmtree(destDir) 
+        os.mkdir(destDir)
+        parseMarkdownFiles(True)
+        markdownCountCheck = self.checkMarkdownFilesCount(srcDir) == self.checkMarkdownFilesCount(destDir)
+        shutil.rmtree(destDir) 
+        return markdownCountCheck  
+
     def run(self):
         try:
-            self.handlePaths()
-            
-            logging.info("Starting test execution...")
-            
-            parseDatasetFile()
-            logging.info("Dataset parsed successfully")
-            
-            fillMediaList()
-            
-            populateTaxcoReport()
-            populateContentReport()
-            logging.info("Reports populated")
-            
-            parseMarkdownFiles(False)
-            logging.info("Markdown files parsed")
-            
-            processMediaList()
-            logging.info("Media validation finalized")
-            
-            generateTaxcoReport()
-            generateContentReport()
-            logging.info("Reports generated")
+            # Run script
+            compiler = ContentCompiler(skipLinkCheck=False)  # Adjust argument if needed
+            compiler.compile()
 
             if not self.validateTestReport(self.EXPECTED_TAXCO_TEST_REPORT_PATH, self.ACTUAL_TAXCO_TEST_REPORT_PATH):
                 logging.error("Taxco Test report validation failed")
@@ -116,7 +112,7 @@ class TestRunner:
                 logging.error("Content Test report validation failed")
                 sys.exit(12)
 
-            if not evaluateTests():
+            if not self.evaluateTests():
                 logging.error("Test evaluation failed")
                 sys.exit(13)
 

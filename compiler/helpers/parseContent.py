@@ -4,7 +4,7 @@ from compiler.config import (
 	SRC_DIR, DEST_DIR,
     failedFiles, ignoredFiles, parsedFiles, WIPFiles,
 	SUCCESS_ICON, TODO_ITEMS_ICON, WARNING_ICON,
-    FILE_HAS_IGNORE_TAG, ERROR_INVALID_MD_BOLD_TEXT,
+    FILE_HAS_IGNORE_TAG, ERROR_INVALID_MD_BOLD_TEXT, ERROR_NONE_IN_TAGS, ERROR_INVALID_TAXCO,
     ERROR_INVALID_MD_TITELS, ERROR_NO_TAXCO_FOUND, ERROR_TAXCO_NOT_NEEDED,
     ERROR_TITEL_NOT_EQUAL_TO_FILENAME, ERROR_WIP_FOUND, FAIL_CROSS_ICON, IGNORE_FOLDERS,
 )
@@ -34,6 +34,10 @@ def parseMarkdownFiles(skipValidateDynamicLinks):
   
 		# Check for double page frontmatter
 		errors = checkForDoublePageFrontmatter(filePath, content)
+
+		# Check for tags that are not allowed
+		if existingTags and 'None' in existingTags:
+			errors.append(ERROR_NONE_IN_TAGS)
   
 		# Process media links
 		updatedContent, mediaErrors = processMediaLinks(filePath, content, skipValidateDynamicLinks)
@@ -120,7 +124,7 @@ def appendFileToSpecificList(errors, todoItems, filePath, taxonomie, tags):
 		if FILE_HAS_IGNORE_TAG in errors:
 			icon = WARNING_ICON
 			targetList = ignoredFiles
-		elif ERROR_NO_TAXCO_FOUND in errors or ERROR_TAXCO_NOT_NEEDED in errors:
+		elif ERROR_NO_TAXCO_FOUND in errors or ERROR_TAXCO_NOT_NEEDED in errors or any(error.startswith(ERROR_INVALID_TAXCO) for error in errors):
 			icon = FAIL_CROSS_ICON
 			targetList = failedFiles
 		elif todoItems:
