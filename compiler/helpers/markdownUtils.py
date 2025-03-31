@@ -144,7 +144,7 @@ def isFileNameAndTitelEqual(filePath, content) -> bool:
     return titel == [fileName]
 
 # Helper function to check for bold in markdown titel
-def checkForBoldInTitel(content):
+def checkForBoldInTitle(content):
     invalidTitels = []
     
     title_regex = re.compile(TITLE_REGEX, re.MULTILINE)
@@ -177,7 +177,7 @@ def checkForDoublePageFrontmatter(filePath, content):
     
     errors = []
     if duplicate_keys:
-        error_msg = f"{ERROR_DOUBLE_PAGE_FRONTMATTER}: '{', '.join(duplicate_keys)}'"
+        error_msg = f"{ERROR_DOUBLE_PAGE_FRONTMATTER}'{', '.join(duplicate_keys)}'"
         if filePath:
             logging.warning(error_msg)
         errors.append(error_msg)

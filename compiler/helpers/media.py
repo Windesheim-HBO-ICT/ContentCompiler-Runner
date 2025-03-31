@@ -25,7 +25,6 @@ def fillMediaList():
     for root, dirs, files in os.walk(SRC_DIR):
         # Skip folders in IGNORE_FOLDERS
         dirs[:] = [d for d in dirs if d not in IGNORE_FOLDERS]
-        
         # Add all files to the candidate list
         for file in files:
             # Ignore files with extensions like .md, .github, etc.
@@ -54,7 +53,6 @@ def processMediaLinks(filePath: Path, content: str, skipValidateDynamicLinks: bo
 
     return content, errors
 
-
 def processMediaList():
     """
     After all markdown files have been processed, check any remaining
@@ -71,7 +69,6 @@ def processMediaList():
         
         filePath = Path(SRC_DIR) / file
         failedMediaFiles.append(createMediaTableRow(TODO_ITEMS_ICON, file.name, filePath, error))
-
 
 def processDynamicLinks(filePath: Path, content: str, skipValidateDynamicLinks: bool):
     """
@@ -126,7 +123,6 @@ def isLinkValid(dynamicLink: str) -> bool:
                 return True
 
     return False
-
 
 def validateImageLinks(content: str) -> list[str]:
     errors = []
@@ -197,7 +193,6 @@ def validateImageLinks(content: str) -> list[str]:
             logging.warning(errMsg)
     
     return errors
-
 
 def validatePdfLinks(content: str) -> list[str]:
     """

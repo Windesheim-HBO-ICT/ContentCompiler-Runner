@@ -66,7 +66,7 @@ ERROR_WIP_FOUND = "Work-in-progress items gevonden: "
 ERROR_TITEL_NOT_EQUAL_TO_FILENAME = "Titel komt niet overeen met bestandsnaam"
 ERROR_INVALID_MD_TITELS = "Titels zijn verkeerd opgemaakt"
 ERROR_INVALID_MD_BOLD_TEXT = "Dikgedrukte tekst is verkeerd opgemaakt"
-ERROR_DOUBLE_PAGE_FRONTMATTER = "Meerdere pagina frontmatters gevonden"
+ERROR_DOUBLE_PAGE_FRONTMATTER = "Meerdere pagina frontmatters gevonden: "
 ERROR_NONE_IN_TAGS = "'None' gevonden in de page frontmatter tags"
 
 # Info messages

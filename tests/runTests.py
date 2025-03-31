@@ -21,14 +21,6 @@ from compiler.runCompiler import ContentCompiler
 class TestRunner:
     def __init__(self):
         self.setupPaths()
-        # self.setupLogging()
-
-    # @staticmethod
-    # def setupLogging():
-    #     logging.basicConfig(
-    #         level=logging.CRITICAL,
-    #         format='%(asctime)s - %(levelname)s - %(message)s'
-    #     )
 
     def setupPaths(self):
         self.EXPECTED_TAXCO_TEST_REPORT_PATH = 'tests/reports/expected_taxco_test_report.md'

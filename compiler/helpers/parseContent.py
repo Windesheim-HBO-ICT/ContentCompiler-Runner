@@ -11,7 +11,7 @@ from compiler.config import (
 from compiler.helpers.media import processMediaLinks
 from compiler.report.table import createFileReportRow
 from compiler.helpers.markdownUtils import (
-    checkForBoldInTitel, checkForDoubleBoldInText, checkForDoublePageFrontmatter,
+    checkForBoldInTitle, checkForDoubleBoldInText, checkForDoublePageFrontmatter,
     isFileNameAndTitelEqual, extractHeaderValues, findWIPItems, generateTags, checkForIgnoreTag
 )
 
@@ -91,7 +91,7 @@ def validateContent(filePath, content):
 	errors = []
 	todoItems = findWIPItems(content)
 	fileNameAndTitelEqual = isFileNameAndTitelEqual(filePath, content)
-	invalidMDTitels = checkForBoldInTitel(content)
+	invalidMDTitels = checkForBoldInTitle(content)
 	invalidMDText = checkForDoubleBoldInText(content)
 
 	if todoItems:
