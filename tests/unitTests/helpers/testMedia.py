@@ -3,25 +3,27 @@ from unittest.mock import patch
 from pathlib import Path
 from compiler.helpers.media import isLinkValid  
 
-class TestMedia(unittest.TestCase):
-
+class TestFillMediaList(unittest.TestCase):
     """
-    Testcases for fillMedialist
+    Testcases for fillMediaList
     """
 
+class TestProcessMediaLinks(unittest.TestCase):
     """
     Testcases for processMediaLinks
     """
 
+class TestProcessMediaList(unittest.TestCase):
     """
     Testcases for processMediaList
     """
 
+class TestProcessDynamicLinks(unittest.TestCase):
     """
     Testcases for processDynamicLinks
     """
 
-
+class TestValidLinks(unittest.TestCase):
     """
     Testcases for checking if a link is valid
     """

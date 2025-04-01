@@ -7,8 +7,7 @@ from compiler.config import (
 
 
 
-class TestDataset(unittest.TestCase):
-
+class TestDatasetEmptyRows(unittest.TestCase):
     """
     Testcases for checking if a dataset row is empty
     """
@@ -32,6 +31,7 @@ class TestDataset(unittest.TestCase):
         row = ["", "", "", "", "", "", "", "", "", ""]
         self.assertTrue(checkRowEmpty(row))
 
+class TestParsingDataset(unittest.TestCase):
     """
     Testcases for parsing the dataset
     """

@@ -14,6 +14,8 @@ class TestMarkdownUtils(unittest.TestCase):
     """
     Testcases for extracting header values
     """
+    
+class TestExtractingHeaderValues(unittest.TestCase):
     def testSingleHeaderValue(self):
         content = "title: My Document\ndraft: true"
         self.assertEqual(extractHeaderValues(content, "draft"), ["true"])
@@ -35,7 +37,7 @@ class TestMarkdownUtils(unittest.TestCase):
         self.assertEqual(extractHeaderValues(content, "tags"), ["python", "unittest"])
         self.assertEqual(extractHeaderValues(content, "title"), ["Sample Doc"])
 
-
+class TestFindingWIPFiles(unittest.TestCase):
     """
     Testcases for finding WIP items
     """
@@ -59,6 +61,7 @@ class TestMarkdownUtils(unittest.TestCase):
         result = findWIPItems(content)
         self.assertEqual(result, expected_items)
 
+class TestBoldTextsInTitle(unittest.TestCase):
     """
     Testcases for checking if titles contain bold texts
     """
@@ -82,7 +85,7 @@ class TestMarkdownUtils(unittest.TestCase):
         invalid_titles = checkForBoldInTitle(content)
         self.assertEqual(invalid_titles, [])
 
-
+class TestDoubleBoldTexts(unittest.TestCase):
     """
     Testcases for the double bold texts
     """
@@ -110,6 +113,7 @@ class TestMarkdownUtils(unittest.TestCase):
         result = checkForDoubleBoldInText(content)
         self.assertEqual(result, ["****double****", "****bold****"])
 
+class TestDoublePageFrontMatter(unittest.TestCase):
     """
     Testcases for the double page frontmatter
     """
