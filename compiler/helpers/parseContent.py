@@ -5,46 +5,39 @@ from compiler.config import (
     failedFiles, ignoredFiles, parsedFiles, WIPFiles,
 	SUCCESS_ICON, TODO_ITEMS_ICON, WARNING_ICON,
     FILE_HAS_IGNORE_TAG, ERROR_INVALID_MD_BOLD_TEXT,
-    ERROR_INVALID_MD_TITELS, ERROR_NO_TAXCO_FOUND, ERROR_TAXCO_NOT_NEEDED,
-    ERROR_TITEL_NOT_EQUAL_TO_FILENAME, ERROR_WIP_FOUND, FAIL_CROSS_ICON, IGNORE_FOLDERS,
+    ERROR_INVALID_MD_TITLES, ERROR_NO_TAXCO_FOUND, ERROR_TAXCO_NOT_NEEDED,
+    ERROR_TITLE_NOT_EQUAL_TO_FILENAME, ERROR_WIP_FOUND, FAIL_CROSS_ICON, IGNORE_FOLDERS,
 )
 from compiler.helpers.media import processMediaLinks
 from compiler.report.table import createFileReportRow
 from compiler.helpers.markdownUtils import (
-    checkForBoldInTitel, checkForDoubleBoldInText, checkForDoublePageFrontmatter,
-    isFileNameAndTitelEqual, extractHeaderValues, findWIPItems, generateTags, checkForIgnoreTag
+    checkForBoldInTitle, checkForDoubleBoldInText, checkForDoublePageFrontmatter,
+    isFileNameAndTitleEqual, extractHeaderValues, findWIPItems, generateTags, checkForIgnoreTag
 )
 
 
-# Update markdown files in the source directory
+"""Update markdown files in the source directory"""
 def parseMarkdownFiles(skipValidateDynamicLinks):
-	# Loop through all markdown files in the source directory
 	for filePath in Path(SRC_DIR).rglob('*.md'):
-		# Skip certain folders
+
 		if shouldSkipFile(filePath):
 			logging.info(f"Skipping folder: {filePath}")
 			continue
     
 		destFilePath = computeDestFilePath(filePath)
   
-		# Start reading the content of the file
 		content = readFileContent(filePath)
 		existingTags = extractHeaderValues(content, 'tags')
 		difficulty = extractHeaderValues(content, 'difficulty')
   
-		# Check for double page frontmatter
 		errors = checkForDoublePageFrontmatter(filePath, content)
   
-		# Process media links
 		updatedContent, mediaErrors = processMediaLinks(filePath, content, skipValidateDynamicLinks)
 		errors.extend(mediaErrors)
   
-		# Check if file has an ignore tag; if so, mark and skip further validations.
 		hasIgnoreTag = checkForIgnoreTag(filePath, updatedContent)
   
-		# If the file has an ignore tag, skip the taxonomie and tag generation
 		if not hasIgnoreTag:
-			# Process taxonomie and generate tags
 			taxonomie, newTags, tagErrors = processTags(filePath, content, existingTags)
 			errors.extend(tagErrors)
 
@@ -61,51 +54,53 @@ def parseMarkdownFiles(skipValidateDynamicLinks):
 		appendFileToSpecificList(errors, todoItems, filePath, taxonomie, newTags)
 		saveParsedFile(filePath, taxonomie, newTags, difficulty, isDraft, hasIgnoreTag, content, destFilePath)
 
-# Helper function to determine if a file should be skipped
+"""Helper function to determine if a file should be skipped"""
 def shouldSkipFile(filePath):
     return any(folder in str(filePath) for folder in IGNORE_FOLDERS)
 
-# Helper function to compute the destination file path
+"""Helper function to compute the destination file path"""
 def computeDestFilePath(filePath):
     relativePath = filePath.relative_to(SRC_DIR)
     return DEST_DIR / relativePath
 
-# Helper function to read the content of a file
+"""Helper function to read the content of a file"""
 def readFileContent(filePath):
     with open(filePath, 'r', encoding='utf-8') as f:
         return f.read()
 
-# Helper function to process the tags of a markdown file
+"""Helper function to process the tags of a markdown file"""
 def processTags(filePath, content, existingTags):
     taxonomie = extractHeaderValues(content, 'taxonomie')
     newTags, tagErrors = generateTags(taxonomie, existingTags, filePath)
     return taxonomie, newTags, tagErrors
 
-# Helper function to validate the content of a markdown file
+"""Helper function to validate the content of a markdown file"""
 def validateContent(filePath, content):
 	errors = []
 	todoItems = findWIPItems(content)
-	fileNameAndTitelEqual = isFileNameAndTitelEqual(filePath, content)
-	invalidMDTitels = checkForBoldInTitel(content)
+	fileNameAndTitleEqual = isFileNameAndTitleEqual(filePath, content)
+	invalidMDTitle = checkForBoldInTitle(content)
 	invalidMDText = checkForDoubleBoldInText(content)
 
 	if todoItems:
 		errors.append(f"{ERROR_WIP_FOUND}<br>{'<br>'.join(todoItems)}")
 
-	if not fileNameAndTitelEqual:
-		titel = extractHeaderValues(content, 'title')
-		if isinstance(titel, list):
-			titel = titel[0] if titel else ""
-		logging.warning(f"Titel '{titel}' komt niet overeen met bestandsnaam '{filePath.stem}' in bestand: '{filePath}'")
-		errors.append(ERROR_TITEL_NOT_EQUAL_TO_FILENAME)
-		errors.append(f"- Titel: {titel}")
+	if not fileNameAndTitleEqual:
+		title = extractHeaderValues(content, 'title')
+
+		if isinstance(title, list):
+			title = title[0] if title else ""
+
+		logging.warning(f"Titel '{title}' komt niet overeen met bestandsnaam '{filePath.stem}' in bestand: '{filePath}'")
+		errors.append(ERROR_TITLE_NOT_EQUAL_TO_FILENAME)
+		errors.append(f"- Titel: {title}")
 		errors.append(f"- Bestandsnaam: {filePath.stem}")
 
-	if invalidMDTitels:
-		titel = extractHeaderValues(content, 'title')
-		logging.warning(f"Titel '{invalidMDTitels}' is/zijn verkeerd opgemaakt in bestand: '{filePath}'")
-		errors.append(ERROR_INVALID_MD_TITELS)
-		errors.extend([f"- {error.replace('**', '\\*\\*')}" for error in invalidMDTitels])
+	if invalidMDTitle:
+		title = extractHeaderValues(content, 'title')
+		logging.warning(f"Titel '{invalidMDTitle}' is/zijn verkeerd opgemaakt in bestand: '{filePath}'")
+		errors.append(ERROR_INVALID_MD_TITLES)
+		errors.extend([f"- {error.replace('**', '\\*\\*')}" for error in invalidMDTitle])
 
 	if invalidMDText:
 		logging.warning(f"Tekst is verkeerd opgemaakt in bestand: '{filePath}'")
@@ -114,7 +109,7 @@ def validateContent(filePath, content):
 
 	return errors, todoItems
 
-# Fill the different lists used for the report
+"""Fill the different lists used for the report"""
 def appendFileToSpecificList(errors, todoItems, filePath, taxonomie, tags):
 	if errors:
 		if FILE_HAS_IGNORE_TAG in errors:
@@ -135,7 +130,7 @@ def appendFileToSpecificList(errors, todoItems, filePath, taxonomie, tags):
 
 	targetList.append(createFileReportRow(icon, filePath, taxonomie, tags, errors))
 
-# Combines everything into a new md file
+"""Combines everything into a new md file"""
 def saveParsedFile(filePath, taxonomie, tags, difficulty, isDraft, hasIgnoreTag, content, destFilePath):
     newContent = (
         f"---\ntitle: {filePath.stem}\ntaxonomie: {taxonomie}\ntags:\n" +

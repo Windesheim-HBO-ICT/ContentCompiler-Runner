@@ -1,6 +1,5 @@
 from compiler.config import SRC_DIR
 
-# Generate a markdown table string from a list of rows and headers.
 def generateMarkdownTable(headers, rows):
     table = "| " + " | ".join(headers) + " |\n"
     table += "| " + " | ".join(["---"] * len(headers)) + " |\n"
@@ -9,7 +8,6 @@ def generateMarkdownTable(headers, rows):
         table += "| " + " | ".join(row) + " |\n"
     return table
 
-# Create a new row in the file report based on the status, file path, taxonomie, and tags.
 def createFileReportRow(status, filePath, taxonomie, tags, errors):
     return {
         "status": status,
@@ -20,7 +18,6 @@ def createFileReportRow(status, filePath, taxonomie, tags, errors):
         "errors": '<br>'.join(errors) if errors else "N/A"
     }
 
-# Format the success or failed report table based on a list.
 def formatFileReportTable(fileReport):
     headers = ["Status", "File", "Path", "Taxonomie", "Tags", "Errors"]
     rows = [[
@@ -34,7 +31,6 @@ def formatFileReportTable(fileReport):
 
     return generateMarkdownTable(headers, rows)
 
-# Create a row for the image report table
 def createMediaTableRow(statusIcon, fileName, filePath, error):
     return {
         "status" : statusIcon,
@@ -43,7 +39,6 @@ def createMediaTableRow(statusIcon, fileName, filePath, error):
         "error": error,
     }
 
-# Format the image report table with specific headers and rows
 def formatMediaReportTable(mediaReport):
     headers = ["Status", "Image", "Path", "Error"]
     rows = [[

@@ -14,10 +14,10 @@ from compiler.config import (
 # Global candidate list for media files (images and PDFs)
 candidateMediaFiles = []
 
+"""
+Initialize the global candidateMediaFiles list by collecting all files in SRC_DIR that might be referenced (images, PDFs, etc.).
+"""
 def fillMediaList():
-    """
-    Initialize the global candidateMediaFiles list by collecting all files in SRC_DIR that might be referenced (images, PDFs, etc.).
-    """
     global candidateMediaFiles
     candidateMediaFiles = []
 
@@ -25,18 +25,17 @@ def fillMediaList():
         # Skip folders in IGNORE_FOLDERS
         dirs[:] = [d for d in dirs if d not in IGNORE_FOLDERS]
         
-        # Add all files to the candidate list
+        # Add all files, except files with .md, .github and .gitignore to the candidate list
         for file in files:
-            # Ignore files with extensions like .md, .github, etc.
             if not file.endswith(('.md', '.github', '.gitignore')):
                 candidateMediaFiles.append(Path(root) / file)
 
 
+"""
+Combines dynamic link processing, image validation, and PDF validation.
+Returns updated content and a list of error messages.
+"""
 def processMediaLinks(filePath: Path, content: str, skipValidateDynamicLinks: bool = False):
-    """
-    Combines dynamic link processing, image validation, and PDF validation.
-    Returns updated content and a list of error messages.
-    """
     errors = []
 
     # 1. Process dynamic links
@@ -53,14 +52,12 @@ def processMediaLinks(filePath: Path, content: str, skipValidateDynamicLinks: bo
 
     return content, errors
 
-
+"""
+After all markdown files have been processed, check any remaining
+media files in candidateMediaFiles. They were never referenced,
+so mark them as "not used" errors.
+"""
 def processMediaList():
-    """
-    After all markdown files have been processed, check any remaining
-    media files in candidateMediaFiles. They were never referenced,
-    so mark them as "not used" errors.
-    """
-
     for file in candidateMediaFiles:
         if file.suffix.lower() == '.pdf':
             error = f"{ERROR_PDF_NOT_USED} `{file.name}`"
@@ -73,12 +70,12 @@ def processMediaList():
         failedMediaFiles.append(createMediaTableRow(TODO_ITEMS_ICON, file.name, filePath, error))
 
 
+"""
+Process dynamic links in the markdown content:
+    - Removes 'content/' from links
+    - Checks if link is valid (file exists) unless skipValidateDynamicLinks=True
+"""
 def processDynamicLinks(filePath: Path, content: str, skipValidateDynamicLinks: bool):
-    """
-    Process dynamic links in the markdown content:
-      - Removes 'content/' from links
-      - Checks if link is valid (file exists) unless skipValidateDynamicLinks=True
-    """
     dynamicLinks = re.findall(DYNAMIC_LINK_REGEX, content)
     errors = []
     
@@ -93,11 +90,10 @@ def processDynamicLinks(filePath: Path, content: str, skipValidateDynamicLinks: 
         newLink = cleanedLink.replace('content/', '')
         content = content.replace(cleanedLink, newLink)
 
-        # If we skip validation, move on
         if skipValidateDynamicLinks:
             continue
 
-        # Check if the link is valid
+
         if not isLinkValid(newLink):
             # Escape pipe characters for Markdown
             errors.append(f"{ERROR_INVALID_DYNAMIC_LINK} `{newLink.replace('|', '\|')}`")
@@ -105,11 +101,10 @@ def processDynamicLinks(filePath: Path, content: str, skipValidateDynamicLinks: 
 
     return content, errors
 
+"""
+Check if a dynamic link is valid (the referenced file actually exists).
+"""
 def isLinkValid(dynamicLink: str) -> bool:
-    """
-    Check if a dynamic link is valid (the referenced file actually exists).
-    """
-
     # Remove any anchor (e.g. #section)
     if '#' in dynamicLink:
         dynamicLink = dynamicLink.split('#')[0]
@@ -122,7 +117,6 @@ def isLinkValid(dynamicLink: str) -> bool:
     for root, dirs, files in os.walk(SRC_DIR):
         for file in files:
             if file.startswith(fileName):
-                # If the file is found, the link is valid, so break the loop
                 return True
 
     return False
@@ -141,14 +135,17 @@ def validateImageLinks(content: str) -> list[str]:
         imageName = match[0].strip() if match[0] else ""
         if not imageName:
             continue
+
         # Skip remote images
         if imageName.startswith('http://') or imageName.startswith('https://'):
             continue
+
         foundFile = None
         for file in candidateMediaFiles:
             if file.name == imageName:
                 foundFile = file
                 break
+
         if foundFile and foundFile.exists():
             try:
                 relPath = foundFile.relative_to(SRC_DIR)
@@ -168,18 +165,23 @@ def validateImageLinks(content: str) -> list[str]:
     for match in mdImageMatches:
         # match[0] is the alt text, match[1] is the image path
         imagePath = match[1].strip() if match[1] else ""
+
         if not imagePath:
             continue
+
         # Extract just the file name from the path
         imageName = Path(imagePath).name
+
         # Skip remote images
         if imagePath.startswith('http://') or imagePath.startswith('https://'):
             continue
+
         foundFile = None
         for file in candidateMediaFiles:
             if file.name == imageName:
                 foundFile = file
                 break
+
         if foundFile and foundFile.exists():
             try:
                 relPath = foundFile.relative_to(SRC_DIR)
@@ -197,13 +199,12 @@ def validateImageLinks(content: str) -> list[str]:
     
     return errors
 
-
+"""
+- Matches standard PDF links PDF_REGEX. Copies them if found, else logs error.
+- Matches invalid PDF links with ALT_PDF_REGEX. These are flagged as errors.
+Removes found files from candidateMediaFiles to avoid "unused" flags.
+"""
 def validatePdfLinks(content: str) -> list[str]:
-    """
-    - Matches standard PDF links PDF_REGEX. Copies them if found, else logs error.
-    - Matches invalid PDF links with ALT_PDF_REGEX. These are flagged as errors.
-    Removes found files from candidateMediaFiles to avoid "unused" flags.
-    """
     errors = []
 
     # Standard PDF links
@@ -239,7 +240,7 @@ def validatePdfLinks(content: str) -> list[str]:
             logging.warning(errMsg)
             errors.append(errMsg)
 
-    # Invalid PDF links with '!'
+    # Invalid PDF links with '!' at the front
     altPdfMatches = re.findall(ALT_PDF_REGEX, content)    
     for file in altPdfMatches:
         pdfFileName = file.strip()

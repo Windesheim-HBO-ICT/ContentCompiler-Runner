@@ -1,11 +1,12 @@
 from compiler.report.table import generateMarkdownTable
-from compiler.config import taxcoReport, contentReport
+from compiler.config import taxcoReport, contentReport, fileTypeMapping
 from compiler.config import LT, DT, OI, PI, FAIL_CIRCLE_ICON, SUCCESS_ICON, NOT_NECESSARY_ICON, TAXCO_REPORT_PATH
 
 
-# Update the taxco list with the new values
+"""Update the taxco list with the new values"""
 def updateProcessReportData(tc1, tc2):
-    # Helper function to update the TC2 status for a given index
+
+    """Helper function to update the TC2 status for a given index"""
     def updateProcessReportRow(tc1, tc2, index):
         # Check if the tc2 matches the index and the current status is not NOT_NECESSARY_ICON
         if tc2 == str(index + 1) and taxcoReport[tc1]['TC2'][index] != NOT_NECESSARY_ICON:
@@ -16,19 +17,16 @@ def updateProcessReportData(tc1, tc2):
     for i in range(3):
         updateProcessReportRow(tc1, tc2, i)
 
-# Update the content list data with the new values.
+"""Update the content list data with the new values."""
 def updateSubjectReportData(tc1, tc2, tc3, fileType):
-    # Helper function to update the record with the new values
+    """Helper function to update the record with the new values"""
     def updateSubjectReportRow(tc1, tc2, tc3, fileType, searchType):
-        fileTypeMapping = {
-            "LT": "Leertaken",
-            "OI": "Ondersteunende-informatie",  
-            "PI": "Procedurele-informatie",     
-            "DT": "Deeltaken"                   
-        }
-
-        # Convert fileType if it exists in the mapping
+        # Convert fileType if it exists in the mapping from config
         fileTypeFull = fileTypeMapping.get(fileType, fileType)
+
+        # Sets the value of a 4C/ID component for the given tc3 (subject) and tc1 on the three different HBO-i niveaus
+        # This shows if there is content present for the given subject and process + processstep on a certain 4C/ID component (searchType)
+        # it is a 'v' if the types are equal, the tc2 level is what it should be and if the given taxonomie code is not not-needed
         contentReport[tc3][tc1][searchType] = [
             'v' if fileTypeFull == searchType and tc2 == '1' and contentReport[tc3][tc1][searchType][0] != NOT_NECESSARY_ICON else contentReport[tc3][tc1][searchType][0], 
             'v' if fileTypeFull == searchType and tc2 == '2' and contentReport[tc3][tc1][searchType][1] != NOT_NECESSARY_ICON else contentReport[tc3][tc1][searchType][1], 
@@ -41,7 +39,7 @@ def updateSubjectReportData(tc1, tc2, tc3, fileType):
     updateSubjectReportRow(tc1, tc2, tc3, fileType, PI)
     updateSubjectReportRow(tc1, tc2, tc3, fileType, DT)
 
-# Generate the report based on the taxonomie report, success, and failed reports.
+"""Generate the report based on the taxonomie report, success, and failed reports."""
 def generateTaxcoReport():
     with open(TAXCO_REPORT_PATH, "w", encoding="utf-8") as f:
         f.write('---\ndraft: true\n---\n')
@@ -65,13 +63,13 @@ def generateTaxcoReport():
         f.write('\n')
         f.write(generateSubjectTable())
 
-# Format the report table for the process table
+"""Format the report table for the process table"""
 def generateProcessTable():
-    # Define the headers for the process table
+
     headers = ["TC1", "Proces", "Processtap", "Niveau 1", "Niveau 2", "Niveau 3"]
     rows = []
 
-    # Helper function to get the status icon for a given level
+    """Helper function to get the status icon for a given level"""
     def getStatus(level):
         if level == 'v' or level == 'g':
             return SUCCESS_ICON
@@ -89,18 +87,16 @@ def generateProcessTable():
         niveau_2 = getStatus(tc2_levels[1])
         niveau_3 = getStatus(tc2_levels[2])
 
-        # Append the row to the list of rows
         rows.append([tc, proces, processtap, niveau_1, niveau_2, niveau_3])
 
-    # Generate the markdown table using the headers and rows
     return generateMarkdownTable(headers, rows)
 
-# Format the report for the subject table
+"""Format the report for the subject table"""
 def generateSubjectTable():
     headers = ["TC3", "TC1", "TC2", LT, OI, PI, DT]
     rows = []
 
-    # Helper function to get the status of the value
+    """Helper function to get the status of the value"""
     def getStatus(value):
         if value == 'v' or value == 'g':
             return SUCCESS_ICON
@@ -109,7 +105,7 @@ def generateSubjectTable():
         else:
             return NOT_NECESSARY_ICON
 
-    # Helper function to get the status for each level
+    """Helper function to get the status for each level"""
     def getStatusForLevels(levels):
         return ' '.join([getStatus(level) for level in levels])
 

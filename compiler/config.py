@@ -28,7 +28,7 @@ IMAGE_REGEX = r'!\[\[([^|\]]+\.(?:jpg|jpeg|png|gif|bmp|tiff|webp|gif))(?:\|([^\]
 MD_IMAGE_REGEX = r'!\[([^\]]*)\]\(([^)]+\.(?:jpg|jpeg|png|gif|bmp|tiff|webp))\)'            # Markdown image regex
 PDF_REGEX = r'(?<!\!)\[\[([^|\]]+\.pdf)(?:\|[^\]]+)?\]\]'  						            # For valid PDF references: [[myFile.pdf]] or [[myFile.pdf|Alt text]]
 ALT_PDF_REGEX = r'!\[\[([^|\]]+\.pdf)(?:\|[^\]]+)?\]\]'                                     # For invalid PDF references with '!' in front: ![[myFile.pdf]]       
-DOUBLE_BOLD_IN_TEXT_REGEX = r'\*\*\*\*.*?\*\*\*\*'											# Bold in titel regex
+DOUBLE_BOLD_IN_TEXT_REGEX = r'\*\*\*\*.*?\*\*\*\*'											# Bold in title regex
 TITLE_REGEX = r'^(#{1,6})\s*(.+)'															# Title regex
 FRONTMATTER_REGEX = r'^---\n(.*?)\n---'														# Frontmatter regex
 FRONTMATTER_KEY_REGEX = r'^\s*([a-zA-Z0-9_-]+)\s*:' 										# Frontmatter key regex
@@ -39,6 +39,13 @@ LT = "Leertaken"
 OI = "Ondersteunende-informatie" 
 PI = "Procedurele-informatie"
 DT = "Deeltaken"
+
+fileTypeMapping = {
+    "LT": "Leertaken",
+    "OI": "Ondersteunende-informatie",  
+    "PI": "Procedurele-informatie",     
+    "DT": "Deeltaken"                   
+}
 
 # Dataset columns numbers
 TC1_COL = 0
@@ -63,8 +70,8 @@ ERROR_PDF_NOT_USED = "PDF wordt niet gebruikt: "
 ERROR_PDF_FORMAT_INVALID = "PDF link formaat is ongeldig, geen ! toegestaan: "
 ERROR_INVALID_DYNAMIC_LINK = "Bestand niet gevonden: "
 ERROR_WIP_FOUND = "Work-in-progress items gevonden: "
-ERROR_TITEL_NOT_EQUAL_TO_FILENAME = "Titel komt niet overeen met bestandsnaam"
-ERROR_INVALID_MD_TITELS = "Titels zijn verkeerd opgemaakt"
+ERROR_TITLE_NOT_EQUAL_TO_FILENAME = "Titel komt niet overeen met bestandsnaam"
+ERROR_INVALID_MD_TITLES = "Titels zijn verkeerd opgemaakt"
 ERROR_INVALID_MD_BOLD_TEXT = "Dikgedrukte tekst is verkeerd opgemaakt"
 ERROR_DOUBLE_PAGE_FRONTMATTER = "Meerdere pagina frontmatters gevonden"
 
