@@ -31,7 +31,6 @@ def fillMediaList():
             if not file.endswith(('.md', '.github', '.gitignore')):
                 candidateMediaFiles.append(Path(root) / file)
 
-
 def processMediaLinks(filePath: Path, content: str, skipValidateDynamicLinks: bool = False):
     """
     Combines dynamic link processing, image validation, and PDF validation.
@@ -204,9 +203,7 @@ def validatePdfLinks(content: str) -> list[str]:
 
     # Standard PDF links
     pdfFiles = re.findall(PDF_REGEX, content)
-
-    files = candidateMediaFiles
-
+    
     for file in pdfFiles:
         pdfFileName = file.strip()
         
