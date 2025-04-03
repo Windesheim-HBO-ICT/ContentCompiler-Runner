@@ -3,7 +3,7 @@ from compiler.config import WIPFiles, failedFiles, failedMediaFiles, parsedFiles
 from compiler.config import WARNING_ICON, FAIL_CROSS_ICON
 
 
-# Generate the report based on the taxonomie report, success, and failed reports.
+"""Generate the report based on the taxonomie report, success, and failed reports."""
 def generateContentReport():
     with open(CONTENT_REPORT_PATH, "w", encoding="utf-8") as f:
         f.write('---\ndraft: true\n---\n')
