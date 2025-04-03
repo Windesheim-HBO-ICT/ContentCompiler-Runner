@@ -1,4 +1,5 @@
 from pathlib import Path
+import urllib.parse
 import re, os, shutil, logging
 from compiler.report.table import createMediaTableRow
 from compiler.config import (
@@ -23,13 +24,11 @@ def fillMediaList():
 
     for root, dirs, files in os.walk(SRC_DIR):
         # Skip folders in IGNORE_FOLDERS
-        dirs[:] = [d for d in dirs if d not in IGNORE_FOLDERS]
-        
+        dirs[:] = [d for d in dirs if d not in IGNORE_FOLDERS]        
         # Add all files, except files with .md, .github and .gitignore to the candidate list
         for file in files:
             if not file.endswith(('.md', '.github', '.gitignore')):
                 candidateMediaFiles.append(Path(root) / file)
-
 
 """
 Combines dynamic link processing, image validation, and PDF validation.
@@ -121,15 +120,12 @@ def isLinkValid(dynamicLink: str) -> bool:
 
     return False
 
-
 def validateImageLinks(content: str) -> list[str]:
     errors = []
-    
     # Find wiki-style image matches
     wikiImageMatches = re.findall(IMAGE_REGEX, content)
     # Find standard Markdown image matches
     mdImageMatches = re.findall(MD_IMAGE_REGEX, content)
-    
     # Process wiki-style image links
     for match in wikiImageMatches:
         imageName = match[0].strip() if match[0] else ""
@@ -159,7 +155,6 @@ def validateImageLinks(content: str) -> list[str]:
         else:
             errMsg = f"{ERROR_IMAGE_NOT_FOUND} `{imageName}`"
             logging.warning(errMsg)
-            errors.append(errMsg)
     
     # Process standard Markdown image links
     for match in mdImageMatches:
@@ -168,7 +163,10 @@ def validateImageLinks(content: str) -> list[str]:
 
         if not imagePath:
             continue
-
+            
+        # Decode URL-encoded spaces (%20 → space)
+        imagePath = urllib.parse.unquote(imagePath)
+    
         # Extract just the file name from the path
         imageName = Path(imagePath).name
 
@@ -195,9 +193,9 @@ def validateImageLinks(content: str) -> list[str]:
         else:
             errMsg = f"{ERROR_IMAGE_NOT_FOUND} `{imageName}`"
             logging.warning(errMsg)
-            errors.append(errMsg)
     
     return errors
+
 
 """
 - Matches standard PDF links PDF_REGEX. Copies them if found, else logs error.
@@ -209,7 +207,7 @@ def validatePdfLinks(content: str) -> list[str]:
 
     # Standard PDF links
     pdfFiles = re.findall(PDF_REGEX, content)
-        
+    
     for file in pdfFiles:
         pdfFileName = file.strip()
         
@@ -222,14 +220,12 @@ def validatePdfLinks(content: str) -> list[str]:
             if file.name == pdfFileName:
                 foundFile = file
                 break
-
         # If the file is found, copy it to build folder
         if foundFile and foundFile.exists():
             try:
                 relPath = foundFile.relative_to(SRC_DIR)
             except ValueError:
                 relPath = foundFile.name
-
             destFile = DEST_DIR / relPath
             destFile.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(foundFile, destFile)
@@ -238,7 +234,6 @@ def validatePdfLinks(content: str) -> list[str]:
         else:
             errMsg = f"{ERROR_PDF_NOT_FOUND} `{pdfFileName}`"
             logging.warning(errMsg)
-            errors.append(errMsg)
 
     # Invalid PDF links with '!' at the front
     altPdfMatches = re.findall(ALT_PDF_REGEX, content)    

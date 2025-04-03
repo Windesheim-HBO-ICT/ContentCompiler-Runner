@@ -3,10 +3,10 @@ from pathlib import Path
 from compiler.config import (
 	SRC_DIR, DEST_DIR,
     failedFiles, ignoredFiles, parsedFiles, WIPFiles,
-	SUCCESS_ICON, TODO_ITEMS_ICON, WARNING_ICON,
-    FILE_HAS_IGNORE_TAG, ERROR_INVALID_MD_BOLD_TEXT,
-    ERROR_INVALID_MD_TITLES, ERROR_NO_TAXCO_FOUND, ERROR_TAXCO_NOT_NEEDED,
-    ERROR_TITLE_NOT_EQUAL_TO_FILENAME, ERROR_WIP_FOUND, FAIL_CROSS_ICON, IGNORE_FOLDERS,
+	  SUCCESS_ICON, TODO_ITEMS_ICON, WARNING_ICON,
+    FILE_HAS_IGNORE_TAG, ERROR_INVALID_MD_BOLD_TEXT, ERROR_NONE_IN_TAGS, ERROR_INVALID_TAXCO,
+    ERROR_INVALID_MD_TITELS, ERROR_NO_TAXCO_FOUND, ERROR_TAXCO_NOT_NEEDED,
+    ERROR_TITEL_NOT_EQUAL_TO_FILENAME, ERROR_WIP_FOUND, FAIL_CROSS_ICON, IGNORE_FOLDERS,
 )
 from compiler.helpers.media import processMediaLinks
 from compiler.report.table import createFileReportRow
@@ -31,6 +31,10 @@ def parseMarkdownFiles(skipValidateDynamicLinks):
 		difficulty = extractHeaderValues(content, 'difficulty')
   
 		errors = checkForDoublePageFrontmatter(filePath, content)
+
+		# Check for tags that are not allowed
+		if existingTags and 'None' in existingTags:
+			errors.append(ERROR_NONE_IN_TAGS)
   
 		updatedContent, mediaErrors = processMediaLinks(filePath, content, skipValidateDynamicLinks)
 		errors.extend(mediaErrors)
@@ -48,9 +52,9 @@ def parseMarkdownFiles(skipValidateDynamicLinks):
 			taxonomie, newTags, todoItems = [], [], []
 			errors.append(FILE_HAS_IGNORE_TAG)
 
-		# If there are any errors, the file is considered a draft unless the ignore tag is used
+		# If there are any errors, the file is considered a draft unless the ignore tag is used	
 		isDraft = True if errors and not hasIgnoreTag else False
-
+		
 		appendFileToSpecificList(errors, todoItems, filePath, taxonomie, newTags)
 		saveParsedFile(filePath, taxonomie, newTags, difficulty, isDraft, hasIgnoreTag, content, destFilePath)
 
@@ -117,6 +121,9 @@ def appendFileToSpecificList(errors, todoItems, filePath, taxonomie, tags):
 			targetList = ignoredFiles
 		elif ERROR_NO_TAXCO_FOUND in errors or ERROR_TAXCO_NOT_NEEDED in errors:
 			icon = FAIL_CROSS_ICON
+			targetList = failedFiles
+		elif any(error.startswith(ERROR_INVALID_TAXCO) for error in errors):
+			icon = WARNING_ICON
 			targetList = failedFiles
 		elif todoItems:
 			icon = TODO_ITEMS_ICON
