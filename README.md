@@ -1,4 +1,4 @@
-# Content Compiler Script
+# Content Compiler Runner
 
 ## Overview
 The Content Compiler is a Python script that processes and validates markdown content files based on taxonomy codes and metadata. It performs several key functions:
