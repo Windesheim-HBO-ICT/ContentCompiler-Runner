@@ -1,11 +1,14 @@
-import os, time, shutil, argparse, logging
-from config import DEST_DIR, SRC_DIR, TAXCO_REPORT_PATH, CONTENT_REPORT_PATH, DATASET
-from files.dataset import parseDatasetFile
-from files.parse import parseMarkdownFiles
-from files.images import fillFailedImages
-from report.populate import populateTaxcoReport, populateContentReport
-from report.generateTaxcoReport import generateTaxcoReport
-from report.generateContentReport import generateContentReport
+import os, time, shutil, argparse, logging, sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from compiler.helpers.dataset import parseDatasetFile
+from compiler.helpers.parseContent import parseMarkdownFiles
+from compiler.report.generateTaxcoReport import generateTaxcoReport
+from compiler.report.generateContentReport import generateContentReport
+from compiler.report.populate import populateTaxcoReport, populateContentReport
+from compiler.helpers.media import fillMediaList, processMediaList
+from compiler.config import DATASET_PATH, SRC_DIR, DEST_DIR
 
 class ContentCompiler:
     def __init__(self, skipLinkCheck: bool = False):
@@ -13,60 +16,58 @@ class ContentCompiler:
         self.setupLogging()
 
     @staticmethod
-    def setupLogging() -> None:
+    def setupLogging():
         logging.basicConfig(
             level=logging.INFO,
             format='%(asctime)s - %(levelname)s - %(message)s'
         )
 
-    def validatePaths(self, dataset, src_dir) -> None:
-        if not os.path.exists(dataset):
-            raise FileNotFoundError(f"Dataset file {dataset} not found.")
-        if not os.path.exists(src_dir):
-            raise FileNotFoundError(f"Source directory {src_dir} not found.")
+    def handlePaths(self):
+        # Check if the dataset and source directory exist
+        if not os.path.exists(DATASET_PATH):
+            raise FileNotFoundError(f"Dataset file {DATASET_PATH} not found.")
+        if not os.path.exists(SRC_DIR):
+            raise FileNotFoundError(f"Source directory {DATASET_PATH} not found.")
+        
+        # Create destination directory
+        if os.path.exists(DEST_DIR):
+            shutil.rmtree(DEST_DIR)
+        os.mkdir(DEST_DIR)
 
-    def initializeDestDir(self, dest_dir) -> None:
-        if os.path.exists(dest_dir):
-            shutil.rmtree(dest_dir)
-        os.mkdir(dest_dir)
-
-    def compile(self) -> None:
-        try:
-            dataset = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', DATASET))
-            src_dir = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', SRC_DIR))
-            dest_dir = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', DEST_DIR))
-            taxco_report_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', TAXCO_REPORT_PATH))
-            content_report_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', CONTENT_REPORT_PATH))
-            
-            self.validatePaths(dataset, src_dir)
-            self.initializeDestDir(dest_dir)
+    def compile(self):
+        try:            
+            # Handle paths checking and creation
+            self.handlePaths()
             
             logging.info("Starting content compilation...")
             
-            parseDatasetFile(dataset)
+            parseDatasetFile()
             logging.info("Dataset parsed successfully")
             
             populateTaxcoReport()
             populateContentReport()
             logging.info("Reports populated")
             
-            parseMarkdownFiles(src_dir, dest_dir, self.skipLinkCheck)
+            fillMediaList()
+            logging.info("Candidate media files initialized")
+            
+            parseMarkdownFiles(self.skipLinkCheck)
             logging.info("Markdown files parsed")
             
-            fillFailedImages(src_dir, dest_dir)
-            logging.info("Failed images processed")
+            processMediaList()
+            logging.info("Media validation finalized")
             
-            generateTaxcoReport(taxco_report_path)
-            generateContentReport(content_report_path)
+            generateTaxcoReport()
+            generateContentReport()
             logging.info("Reports generated successfully")
             
         except Exception as e:
             logging.error(f"Error during compilation: {str(e)}", exc_info=True)
             raise
 
-def main() -> None:
+def main():
     parser = argparse.ArgumentParser(description="Compile content script.")
-    parser.add_argument('--skip-link-check', required=False, action='store_true', help='Skip link check in markdown files.')
+    parser.add_argument('--skip-link-check', required=False, action='store_true', help='Skip link check in markdown helpers.')
     args = parser.parse_args()
 
     startTime = time.time()

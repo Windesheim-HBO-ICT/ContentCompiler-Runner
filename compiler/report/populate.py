@@ -1,12 +1,11 @@
-from config import dataset, taxcoReport, contentReport
-from config import TC1_COL, TC2_COL, TC3_COL, PROCES_COL, PROCESSTAP_COL, NOT_NECESSARY_ICON, LT_COL, DT_COL, OI_COL, PI_COL, LT, DT, OI, PI
+from compiler.config import dataset, taxcoReport, contentReport
+from compiler.config import TC1_COL, TC2_COL, TC3_COL, PROCES_COL, PROCESSTAP_COL, NOT_NECESSARY_ICON, LT_COL, DT_COL, OI_COL, PI_COL, LT, DT, OI, PI
 
-
+"""
+Fills the taxco report with the data from the dataset.
+Every TC1 code is the unique identifier.
+"""
 def populateTaxcoReport():
-    """
-    Fills the taxco report with the data from the dataset.
-    Every TC1 code is the unique identifier.
-    """
     global taxcoReport
 
     for row in dataset:
@@ -20,19 +19,16 @@ def populateTaxcoReport():
         else:
             addNewTaxcoReportEntry(tc1, tc2, proces, processtap)
 
+"""
+Updates an existing entry in the taxco report.
+"""
 def updateTaxcoReport(tc1, tc2):
-    """
-    Updates an existing entry in the taxco report.
-    """
     splittedTc2 = tc2.split(',')
     for index in range(1, 3):
         if taxcoReport[tc1]['TC2'][index] == '🏳️' and splittedTc2[index] != '🏳️':
             taxcoReport[tc1]['TC2'][index] = splittedTc2[index]
 
 def addNewTaxcoReportEntry(tc1, tc2, proces, processtap):
-    """
-    Adds a new entry to the taxco report.
-    """
     splittedTc2 = tc2.split(',')
     taxcoReport[tc1] = {
         "Proces": proces,
@@ -40,12 +36,11 @@ def addNewTaxcoReportEntry(tc1, tc2, proces, processtap):
         'TC2': [NOT_NECESSARY_ICON if splittedTc2[0] == 'X' else 'x', NOT_NECESSARY_ICON if splittedTc2[1] == 'X' else 'x', NOT_NECESSARY_ICON if splittedTc2[2] == 'X' else 'x']
     }
 
-
+"""
+Fills the Report 2 data with the data from the dataset.
+Every unique TC3 and TC1 combination will be added to the Report 2 data.
+"""
 def populateContentReport():
-    """
-    Fills the Report 2 data with the data from the dataset.
-    Every unique TC3 and TC1 combination will be added to the Report 2 data.
-    """
     global contentReport
 
     for row in dataset:
@@ -72,8 +67,8 @@ def populateContentReport():
                 DT: processColumn(dt),
             }
 
+"""
+Processes a column of data, splitting it by commas and replacing 'X' with NOT_NECESSARY_ICON.
+"""
 def processColumn(columnData):
-    """
-    Processes a column of data, splitting it by commas and replacing 'X' with NOT_NECESSARY_ICON.
-    """
     return [NOT_NECESSARY_ICON if val == 'X' else 'x' for val in columnData.split(',')]

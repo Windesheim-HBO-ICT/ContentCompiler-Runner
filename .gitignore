@@ -4,3 +4,7 @@
 /content_repo/build
 content_repo/content_report.md
 content_repo/taxco_report.md
+**/.obsidian
+**/.vscode
+!tests/*.xlsx
+**/.DS_Store
