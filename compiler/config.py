@@ -26,7 +26,7 @@ TODO_REGEX = r'-=[A-Z]+=-' 																    # Regex pattern to find TODO item
 TAXONOMIE_REGEX = r'^[a-z]{2}-\d{1,3}\.[123]\.[^\s\.]+(-[^\s\.]+)*\.(?:OI|DT|PI|LT)$'		# Taxonomie regex
 IMAGE_REGEX = r'!\[\[([^|\]]+\.(?:jpg|jpeg|png|gif|bmp|tiff|webp))(?:\|([^\]]+))?\]\]'      # Image regex
 MD_IMAGE_REGEX = r'!\[([^\]]*)\]\(([^)]+\.(?:jpg|jpeg|png|gif|bmp|tiff|webp))\)'            # Markdown image regex
-PDF_REGEX = r'(?<!\!)\[\[([^|\]]+\.pdf)(?:\|[^\]]+)?\]\]'  						            # For valid PDF references: [[myFile.pdf]] or [[myFile.pdf|Alt text]]
+PDF_REGEX = r'(?<!\!)\[\[([^|\]]+\.pdf)(?:\|[^\]]+)?\]\]|\[([^\]]+)\]\(([^)]+\.pdf)\)'      # For valid PDF references: [[myFile.pdf]] or [[myFile.pdf|Alt text]]
 ALT_PDF_REGEX = r'!\[\[([^|\]]+\.pdf)(?:\|[^\]]+)?\]\]'                                     # For invalid PDF references with '!' in front: ![[myFile.pdf]]       
 DOUBLE_BOLD_IN_TEXT_REGEX = r'\*\*\*\*.*?\*\*\*\*'											# Bold in title regex
 TITLE_REGEX = r'^(#{1,6})\s*(.+)'															# Title regex

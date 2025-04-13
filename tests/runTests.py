@@ -16,7 +16,7 @@ config.CONTENT_REPORT_PATH = Path(__file__).resolve().parent / 'reports/actual_c
 from compiler.config import failedFiles, WIPFiles
 from compiler.helpers.parseContent import parseMarkdownFiles
 from compiler.config import DATASET_PATH, SRC_DIR, DEST_DIR
-from compiler.runCompiler import ContentCompiler
+from compiler.main import ContentCompiler
 
 class TestRunner:
     def __init__(self):
