@@ -2,7 +2,7 @@ import unittest, re
 from unittest.mock import patch
 from compiler.helpers.markdownUtils import (
     checkForDoubleBoldInText, checkForBoldInTitle, 
-    checkForDoublePageFrontmatter, findWIPItems, extractHeaderValues,
+    checkForDoublePageFrontmatter, findWIPItems, extractPageFrontmatters,
     ERROR_DOUBLE_PAGE_FRONTMATTER
 )
 
@@ -18,24 +18,24 @@ class TestMarkdownUtils(unittest.TestCase):
 class TestExtractingHeaderValues(unittest.TestCase):
     def testSingleHeaderValue(self):
         content = "title: My Document\ndraft: true"
-        self.assertEqual(extractHeaderValues(content, "draft"), ["true"])
+        self.assertEqual(extractPageFrontmatters(content, "draft"), ["true"])
 
     def testMissingHeaderValue(self):
         content = "title: My Document\ndraft: true"
-        self.assertIsNone(extractHeaderValues(content, "tags"))
+        self.assertIsNone(extractPageFrontmatters(content, "tags"))
 
     def testEmptyField(self):
         content = "title: My Document\ndraft:"
-        self.assertIsNone(extractHeaderValues(content, "author"))
+        self.assertIsNone(extractPageFrontmatters(content, "author"))
 
     def testListValues(self):
         content = """tags:\n  - python\n  - unittest\n  - regex"""
-        self.assertEqual(extractHeaderValues(content, "tags"), ["python", "unittest", "regex"])
+        self.assertEqual(extractPageFrontmatters(content, "tags"), ["python", "unittest", "regex"])
 
     def test_mixed_format(self):
         content = """title: Sample Doc\ntags:\n  - python\n  - unittest"""
-        self.assertEqual(extractHeaderValues(content, "tags"), ["python", "unittest"])
-        self.assertEqual(extractHeaderValues(content, "title"), ["Sample Doc"])
+        self.assertEqual(extractPageFrontmatters(content, "tags"), ["python", "unittest"])
+        self.assertEqual(extractPageFrontmatters(content, "title"), ["Sample Doc"])
 
 class TestFindingWIPFiles(unittest.TestCase):
     """

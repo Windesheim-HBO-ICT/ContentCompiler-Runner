@@ -91,7 +91,7 @@ def splitTaxonomie(taxonomie):
 """
 Helper function to extract specific values from the page properties / header values of a markdown file
 """
-def extractHeaderValues(content: str, fieldName: str):
+def extractPageFrontmatters(content: str, fieldName: str):
     lines = content.splitlines()
     values = []
     field_prefix = f'{fieldName}:'
@@ -128,7 +128,7 @@ def findWIPItems(content):
 
 """Helper function to check if a file has an ignore tag."""
 def checkForIgnoreTag(filePath, content):
-    ignoreTAG = extractHeaderValues(content, 'ignore')
+    ignoreTAG = extractPageFrontmatters(content, 'ignore')
 
     if ignoreTAG and "true" in ignoreTAG:
         logging.info(f"{FILE_HAS_IGNORE_TAG} `{filePath}`")
@@ -138,7 +138,7 @@ def checkForIgnoreTag(filePath, content):
 
 """Helper function to check if the filename matches the title tag in the markdown file."""
 def isFileNameAndTitleEqual(filePath, content) -> bool:
-    title = extractHeaderValues(content, 'title')
+    title = extractPageFrontmatters(content, 'title')
     fileName = filePath.stem
     
     return title == [fileName]
