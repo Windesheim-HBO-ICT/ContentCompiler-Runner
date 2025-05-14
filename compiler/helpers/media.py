@@ -209,7 +209,15 @@ def validatePdfLinks(content: str) -> list[str]:
     pdfFiles = re.findall(PDF_REGEX, content)
     
     for file in pdfFiles:
-        pdfFileName = file.strip()
+        # file[0] = [[pdf]], file[2] = markdown pdf
+        pdfPath = file[0] or file[2]  
+        if not pdfPath:
+            continue
+
+        # Decode URL-encoded spaces (%20 → space)
+        pdfPath = urllib.parse.unquote(pdfPath)
+
+        pdfFileName = pdfPath.strip()
         
         # Skip remote PDFs
         if pdfFileName.startswith('http://') or pdfFileName.startswith('https://'):

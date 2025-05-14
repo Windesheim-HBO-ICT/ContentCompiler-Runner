@@ -12,23 +12,21 @@ from compiler.helpers.media import processMediaLinks
 from compiler.report.table import createFileReportRow
 from compiler.helpers.markdownUtils import (
     checkForBoldInTitle, checkForDoubleBoldInText, checkForDoublePageFrontmatter,
-    isFileNameAndTitleEqual, extractHeaderValues, findWIPItems, generateTags, checkForIgnoreTag
+    isFileNameAndTitleEqual, extractPageFrontmatters, findWIPItems, generateTags, checkForIgnoreTag
 )
 
 
 """Update markdown files in the source directory"""
 def parseMarkdownFiles(skipValidateDynamicLinks):
 	for filePath in Path(SRC_DIR).rglob('*.md'):
-
 		if shouldSkipFile(filePath):
 			logging.info(f"Skipping folder: {filePath}")
 			continue
-    
 		destFilePath = computeDestFilePath(filePath)
   
 		content = readFileContent(filePath)
-		existingTags = extractHeaderValues(content, 'tags')
-		difficulty = extractHeaderValues(content, 'difficulty')
+		existingTags = extractPageFrontmatters(content, 'tags')
+		difficulty = extractPageFrontmatters(content, 'difficulty')
   
 		errors = checkForDoublePageFrontmatter(filePath, content)
 
@@ -74,7 +72,7 @@ def readFileContent(filePath):
 
 """Helper function to process the tags of a markdown file"""
 def processTags(filePath, content, existingTags):
-    taxonomie = extractHeaderValues(content, 'taxonomie')
+    taxonomie = extractPageFrontmatters(content, 'taxonomie')
     newTags, tagErrors = generateTags(taxonomie, existingTags, filePath)
     return taxonomie, newTags, tagErrors
 
@@ -90,7 +88,7 @@ def validateContent(filePath, content):
 		errors.append(f"{ERROR_WIP_FOUND}<br>{'<br>'.join(todoItems)}")
 
 	if not fileNameAndTitleEqual:
-		title = extractHeaderValues(content, 'title')
+		title = extractPageFrontmatters(content, 'title')
 
 		if isinstance(title, list):
 			title = title[0] if title else ""
@@ -101,7 +99,7 @@ def validateContent(filePath, content):
 		errors.append(f"- Bestandsnaam: {filePath.stem}")
 
 	if invalidMDTitle:
-		title = extractHeaderValues(content, 'title')
+		title = extractPageFrontmatters(content, 'title')
 		logging.warning(f"Titel '{invalidMDTitle}' is/zijn verkeerd opgemaakt in bestand: '{filePath}'")
 		errors.append(ERROR_INVALID_MD_TITLES)
 		errors.extend([f"- {error.replace('**', '\\*\\*')}" for error in invalidMDTitle])
