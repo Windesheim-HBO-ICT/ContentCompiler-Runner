@@ -28,13 +28,18 @@ def updateTaxcoReport(tc1, tc2):
         if taxcoReport[tc1]['TC2'][index] == '🏳️' and splittedTc2[index] != '🏳️':
             taxcoReport[tc1]['TC2'][index] = splittedTc2[index]
 
+"""
+Adds a new entry to the taxco report.
+"""
 def addNewTaxcoReportEntry(tc1, tc2, proces, processtap):
-    splittedTc2 = tc2.split(',')
-    taxcoReport[tc1] = {
-        "Proces": proces,
-        "Processtap": processtap,
-        'TC2': [NOT_NECESSARY_ICON if splittedTc2[0] == 'X' else 'x', NOT_NECESSARY_ICON if splittedTc2[1] == 'X' else 'x', NOT_NECESSARY_ICON if splittedTc2[2] == 'X' else 'x']
-    }
+    if tc2:
+        splittedTc2 = tc2.split(',')
+        if splittedTc2:
+            taxcoReport[tc1] = {
+                "Proces": proces,
+                "Processtap": processtap,
+                'TC2': [NOT_NECESSARY_ICON if splittedTc2[0] == 'X' else 'x', NOT_NECESSARY_ICON if splittedTc2[1] == 'X' else 'x', NOT_NECESSARY_ICON if splittedTc2[2] == 'X' else 'x']
+            }
 
 """
 Fills the Report 2 data with the data from the dataset.
