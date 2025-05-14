@@ -51,7 +51,9 @@ def parseMarkdownFiles(skipValidateDynamicLinks):
 			errors.append(FILE_HAS_IGNORE_TAG)
 
 		# If there are any errors, the file is considered a draft unless the ignore tag is used	
-		isDraft = True if errors and not hasIgnoreTag else False
+		# Temporarily disabled on request from Ernst
+		# isDraft = True if errors and not hasIgnoreTag else False 
+		isDraft = False 
 		
 		appendFileToSpecificList(errors, todoItems, filePath, taxonomie, newTags)
 		saveParsedFile(filePath, taxonomie, newTags, difficulty, isDraft, hasIgnoreTag, content, destFilePath)
