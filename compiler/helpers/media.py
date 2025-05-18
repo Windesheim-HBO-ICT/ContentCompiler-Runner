@@ -27,7 +27,7 @@ def fillMediaList():
         dirs[:] = [d for d in dirs if d not in IGNORE_FOLDERS]        
         # Add all files, except files with .md, .github and .gitignore to the candidate list
         for file in files:
-            if not file.endswith(('.md', '.github', '.gitignore')):
+            if not file.endswith(('.md', '.github', '.gitignore', '.gitkeep')):
                 candidateMediaFiles.append(Path(root) / file)
 
 """
