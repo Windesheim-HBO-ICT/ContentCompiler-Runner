@@ -40,11 +40,11 @@ def parseMarkdownFiles(skipValidateDynamicLinks):
 		hasIgnoreTag = checkForIgnoreTag(filePath, updatedContent)
   
 		if not hasIgnoreTag:
-			taxonomie, newTags, tagErrors = processTags(filePath, content, existingTags)
+			taxonomie, newTags, tagErrors = processTags(filePath, updatedContent, existingTags)
 			errors.extend(tagErrors)
 
 			# Validate content (WIP items, title matching, markdown formatting)
-			validationErrors, todoItems = validateContent(filePath, content)
+			validationErrors, todoItems = validateContent(filePath, updatedContent)
 			errors.extend(validationErrors)
 		else:
 			taxonomie, newTags, todoItems = [], [], []
@@ -56,7 +56,7 @@ def parseMarkdownFiles(skipValidateDynamicLinks):
 		isDraft = False 
 		
 		appendFileToSpecificList(errors, todoItems, filePath, taxonomie, newTags)
-		saveParsedFile(filePath, taxonomie, newTags, difficulty, isDraft, hasIgnoreTag, content, destFilePath)
+		saveParsedFile(filePath, taxonomie, newTags, difficulty, isDraft, hasIgnoreTag, updatedContent, destFilePath)
 
 """Helper function to determine if a file should be skipped"""
 def shouldSkipFile(filePath):
