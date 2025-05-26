@@ -1,4 +1,4 @@
-import csv, logging, pandas
+import csv, logging, pandas #type: ignore
 from compiler.config import (
     dataset, DATASET_PATH,
     TC1_COL, TC2_COL, TC3_COL, PROCES_COL, PROCESSTAP_COL, LT_COL, OI_COL, PI_COL, DT_COL
@@ -25,7 +25,7 @@ def parseDatasetFile():
         reader = csv.reader(csvData.splitlines(), delimiter=';', quotechar='|')
         dataset.extend(list(reader)[1:])
         
-        # Remove empty rows, this is done to prevent errors when reading the dataset
+        # Remove empty rows, this is done to prevent errors when reading the datase
         for row in dataset:
             if checkRowEmpty(row): 
                 dataset.remove(row)

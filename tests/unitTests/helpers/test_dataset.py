@@ -1,9 +1,13 @@
-import unittest, pandas
+import unittest, pandas #type: ignore
 from unittest.mock import patch
 from compiler.helpers.dataset import checkRowEmpty, parseDatasetFile, dataset
 from compiler.config import (
     DATASET_PATH
 )
+
+import sys
+print(sys.executable)
+
 class TestDatasetEmptyRows(unittest.TestCase):
     """
     Testcases for checking if a dataset row is empty
@@ -62,18 +66,29 @@ class TestParsingDataset(unittest.TestCase):
         mock_read_excel.assert_called_once_with(DATASET_PATH)
     
     @patch('pandas.read_excel')
-    def testEmptyRowHandling(self, mock_read_excel):
+    @patch('logging.info')
+    def testEmptyRowHandling(self, mock_logging, mock_read_excel):
         mock_df = pandas.DataFrame({
-            'Column1': ['Header', 'Value1', ''],
-            'Column2': ['Header', 'Data1', ''],
-            'Column3': ['Header', 'Info1', '']
+            'Column1': ['Header', 'Value1', '', 'Value3'],
+            'Column2': ['Header', 'Data1', '', 'Data3'],
+            'Column3': ['Header', 'Info1', '', 'Info3'],
+            'Column4': ['Header', 'Info1', '', 'Info3'],
+            'Column5': ['Header', 'Info1', '', 'Info3'],
+            'Column6': ['Header', 'Info1', '', 'Info3'],
+            'Column7': ['Header', 'Info1', '', 'Info3'],
+            'Column8': ['Header', 'Info1', '', 'Info3'],
+            'Column9': ['Header', 'Info1', '', 'Info3'],
+            'Column10': ['Header', 'Info1', '', 'Info3']
         })
         mock_read_excel.return_value = mock_df
-        with patch('compiler.helpers.dataset.checkRowEmpty', side_effect=[False, True]):
+        with patch('compiler.helpers.dataset.checkRowEmpty', side_effect=[False, False, True, False]):
             parseDatasetFile()
-        
-        self.assertEqual(len(dataset), 2)
+
+        self.assertEqual(len(dataset), 3)
+        self.assertIn('Header', dataset[0])
         self.assertIn('Value1', dataset[1])
+        mock_logging.assert_called_with("Removed empty row: ['', '', '', '', '', '', '', '', '', '']")
+
     
     @patch('pandas.read_excel', side_effect=FileNotFoundError("File not found"))
     def testFileNotFoundError(self, mock_read_excel):
@@ -85,21 +100,6 @@ class TestParsingDataset(unittest.TestCase):
         with self.assertRaises(Exception) as context:
             parseDatasetFile()
         self.assertIn("Invalid Excel file", str(context.exception))
-    
-    @patch('pandas.read_excel')
-    @patch('logging.info')
-    def testLoggingOfEmptyRows(self, mock_logging, mock_read_excel):
-        mock_df = pandas.DataFrame({
-            'Column1': ['Header', 'Value1', ''],
-            'Column2': ['Header', 'Data1', ''],
-            'Column3': ['Header', 'Info1', '']
-        })
-        mock_read_excel.return_value = mock_df
-        
-        with patch('compiler.helpers.dataset.checkRowEmpty', side_effect=[False, True]):
-            parseDatasetFile()
-        
-        mock_logging.assert_called_with("Removed empty row: ['', '', '']")
 
 if __name__ == '__main__':
     unittest.main()
