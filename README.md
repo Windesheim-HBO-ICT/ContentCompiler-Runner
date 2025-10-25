@@ -25,7 +25,10 @@ content_repo/               # Source content directory
 - PIP
 - Required packages:
 ```bash
+python -m venv .venv // if not exist
+.\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+deactivate // when done
 ```
 
 Or 
@@ -69,12 +72,12 @@ So the final directory will be in:
 
 8. To compile the content run the command:
 ```bash
-python compiler/runCompiler.py
+$ ContentCompiler-Runner/.venv/Scripts/python.exe compiler/main.py
 ```
 
 **Options**
 ```bash
-python compiler/runCompiler.py --skip-link-check  # Skip dynamic link validation
+$ ContentCompiler-Runner/.venv/Scripts/python.exe compiler/main.py --skip-link-check  # Skip dynamic link validation
 ```
 
 9. The output will be in the folder
